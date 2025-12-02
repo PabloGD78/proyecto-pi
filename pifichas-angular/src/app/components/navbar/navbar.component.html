@@ -1,0 +1,32 @@
+<nav class="navbar">
+  <div class="navbar-content">
+    <div class="navbar-left">
+      <span class="platform-logo">Logo de la Plataforma</span>
+      <div class="nav-spacer"></div>
+      
+      <button 
+        class="nav-button"
+        [class.active]="isGestionActive"
+        (click)="navigateTo('/home')"
+      >
+        <span class="button-text">Gestión de Alumnos</span>
+        <span *ngIf="isGestionActive" class="active-line"></span>
+      </button>
+      
+      <button 
+        class="nav-button"
+        [class.active]="isReportsActive"
+        (click)="navigateTo('/reports')"
+      >
+        <span class="button-text">Generar Informes</span>
+        <span *ngIf="isReportsActive" class="active-line"></span>
+      </button>
+    </div>
+    
+    <div class="navbar-right">
+      <div class="user-avatar">
+        {{ userInitials }}
+      </div>
+    </div>
+  </div>
+</nav>
