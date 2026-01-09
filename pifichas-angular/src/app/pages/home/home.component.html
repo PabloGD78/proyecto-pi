@@ -1,57 +1,58 @@
 <div class="home-page">
   <div class="page-header">
     <h1>Gestión de Alumnos</h1>
+    <button class="btn-report" (click)="mostrarFormulario = !mostrarFormulario" style="background-color: #007bff; color: white; margin-top: 10px;">
+      {{ mostrarFormulario ? 'Ver Lista' : '+ Añadir Alumno' }}
+    </button>
   </div>
 
-  <div class="search-filter-section">
-    <div class="search-field">
-      <input
-        type="text"
-        placeholder="Buscar alumno por nombre/ID"
-        [(ngModel)]="searchQuery"
-        (input)="onSearchChange()"
-        class="input-field"
-      />
-    </div>
-    <div class="filter-field">
-      <input
-        type="text"
-        placeholder="Filtrar por Clase/Grupo"
-        [(ngModel)]="filterQuery"
-        (input)="onFilterChange()"
-        class="input-field"
-      />
-    </div>
+  <div *ngIf="mostrarFormulario">
+    <app-add-alumno (guardado)="onAlumnoGuardado()"></app-add-alumno>
   </div>
 
-  <div class="table-container">
-    <table class="students-table">
-      <thead>
-        <tr class="table-header">
-          <th>Nombre</th>
-          <th>Grupo</th>
-          <th>Última Modificación</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let student of filteredStudents" class="table-row">
-          <td>{{ student.nombre }}</td>
-          <td>{{ student.grupo }}</td>
-          <td>{{ student.ultimaModificacion }}</td>
-          <td class="action-cell">
-            <button 
-              (click)="goToDetail(student.id)"
-              class="btn-report"
-            >
-              Informe
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <div *ngIf="filteredStudents.length === 0" class="no-results">
-      No se encontraron alumnos con los criterios de búsqueda.
+  <div *ngIf="!mostrarFormulario">
+    <div class="search-filter-section">
+      <div class="search-field">
+        <input type="text" class="input-field" [(ngModel)]="searchQuery" (input)="onSearchChange()" placeholder="Buscar alumno por nombre/ID">
+      </div>
+      <div class="filter-field">
+        <input type="text" class="input-field" [(ngModel)]="filterQuery" (input)="onFilterChange()" placeholder="Filtrar por Clase/Grupo">
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="no-results">
+      <p>Cargando datos del servidor...</p>
+    </div>
+
+    <div class="table-container" *ngIf="!loading && filteredStudents.length > 0">
+      <table class="students-table">
+        <thead class="table-header">
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Apellidos</th>
+            <th>DNI</th>
+            <th>Contacto Tutor</th>
+            <th class="action-cell">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="table-row" *ngFor="let student of filteredStudents">
+            <td>{{ student.id }}</td>
+            <td>{{ student.nombre }}</td>
+            <td>{{ student.apellidos }}</td>
+            <td>{{ student.dni }}</td>
+            <td>{{ student.contacto_tutor }}</td>
+            <td class="action-cell">
+              <button class="btn-report" (click)="goToDetail(student.id)">📋 Informe</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loading && filteredStudents.length === 0" class="no-results">
+      No se han encontrado alumnos.
     </div>
   </div>
 </div>

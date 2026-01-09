@@ -1,13 +1,13 @@
-<div class="detail-page">
+<div class="detail-page" *ngIf="student; else loadingTemplate">
   <div class="detail-header">
     <div class="header-left">
       <div class="avatar">
         {{ getStudentInitials() }}
       </div>
       <div class="header-info">
-        <h2>{{ student?.nombre }}</h2>
-        <p class="group">{{ student?.grupo }}</p>
-        <p class="student-id">ID Alumno: {{ student?.id }}</p>
+        <h2>{{ student.nombre }} {{ student.apellidos }}</h2>
+        <p class="group">{{ student.id_curso ? 'Curso: ' + student.id_curso : 'Sin Curso' }}</p>
+        <p class="student-id">ID Alumno: {{ student.id }}</p>
       </div>
     </div>
 
@@ -15,122 +15,111 @@
       <h1>Gestión Individual de Alumno</h1>
     </div>
 
-    <button class="btn-report" (click)="generateReport()">Generar Informe Rápido</button>
+    <div class="header-actions">
+      <button class="btn-pdf" (click)="generarPDF()">📄 Generar Informe PDF</button>
+      <button class="btn-report" (click)="saveChanges()">Guardar Todo</button>
+      <button class="btn-back-header" (click)="goBack()">Volver</button>
+    </div>
   </div>
 
   <div class="tabs-container">
     <div class="tabs-header">
-      <button
-        class="tab-button"
-        [class.active]="activeTab === 'datos'"
-        (click)="selectTab('datos')"
-      >
+      <button class="tab-button" [class.active]="activeTab === 'datos'" (click)="selectTab('datos')">
         Datos Básicos
       </button>
-      <button
-        class="tab-button"
-        [class.active]="activeTab === 'ficha'"
-        (click)="selectTab('ficha')"
-      >
-        Ficha
+      <button class="tab-button" [class.active]="activeTab === 'ficha'" (click)="selectTab('ficha')">
+        Ficha Médica
       </button>
-      <button
-        class="tab-button"
-        [class.active]="activeTab === 'observaciones'"
-        (click)="selectTab('observaciones')"
-      >
+      <button class="tab-button" [class.active]="activeTab === 'observaciones'" (click)="selectTab('observaciones')">
         Observaciones
       </button>
     </div>
 
     <div class="tabs-content">
-      <!-- TAB: Datos Básicos -->
       <div *ngIf="activeTab === 'datos'" class="tab-pane">
         <h2>Datos Básicos</h2>
         <div class="form-section">
           <div class="form-row">
-            <label>ID del Alumno</label>
-            <div class="form-value">{{ student?.id }}</div>
-          </div>
-          <div class="form-row">
             <label>DNI</label>
-            <div class="form-value">{{ dni }}</div>
+            <input type="text" [(ngModel)]="dni" />
           </div>
           <div class="form-row">
             <label>Fecha de Nacimiento</label>
-            <div class="form-value">{{ fechaNacimiento }}</div>
+            <input type="date" [(ngModel)]="fechaNacimiento" />
           </div>
           <div class="form-row">
             <label>Contacto Tutor</label>
-            <div class="form-value">{{ contactoTutor }}</div>
+            <input type="text" [(ngModel)]="contactoTutor" />
           </div>
         </div>
-        <button class="btn-save" (click)="saveChanges()">Guardar Cambios</button>
+        <button class="btn-save" (click)="saveChanges()">Guardar Datos</button>
       </div>
 
-      <!-- TAB: Ficha -->
       <div *ngIf="activeTab === 'ficha'" class="tab-pane">
-        <h2>Ficha (Datos Médicos y Curriculares)</h2>
+        <h2>Ficha Médica y Curricular</h2>
         <div class="form-section">
           <div class="form-group">
             <label>Datos Médicos</label>
-            <textarea [(ngModel)]="datosMedicos" rows="5"></textarea>
+            <textarea [(ngModel)]="datosMedicos" rows="5" placeholder="Alergias, patologías..."></textarea>
           </div>
           <div class="form-group">
             <label>Adaptaciones Curriculares</label>
-            <textarea [(ngModel)]="adaptacionesCurriculares" rows="5"></textarea>
+            <textarea [(ngModel)]="adaptacionesCurriculares" rows="5" placeholder="Detalles de apoyo..."></textarea>
           </div>
         </div>
-        <div class="ficha-footer">
-          <span>Fecha de Creación: XX/XX/XXXX</span>
-          <span>Última modificación: XX/XX/XXXX</span>
-          <button class="btn-save" (click)="saveChanges()">Guardar Cambios</button>
-        </div>
+        <button class="btn-save" (click)="saveChanges()">Actualizar Ficha</button>
       </div>
 
-      <!-- TAB: Observaciones -->
       <div *ngIf="activeTab === 'observaciones'" class="tab-pane observations-tab">
         <div class="observations-left">
-          <h2>Añadir nueva observación</h2>
-          <div class="form-section">
-            <div class="form-group">
-              <label>Contenido de la Observación</label>
-              <textarea [(ngModel)]="nuevaObservacion" rows="5"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Tipo: Conducta, Académico, Social...</label>
-              <input type="text" [(ngModel)]="tipoObservacion" placeholder="Seleccionar tipo..." />
-            </div>
-            <div class="form-group checkbox">
-              <input type="checkbox" [(ngModel)]="visibleAlTutor" id="visibleTutor" />
-              <label for="visibleTutor">Visible al Tutor</label>
-            </div>
+          <h2>Añadir Observación</h2>
+          <textarea [(ngModel)]="nuevaObservacion" rows="4" placeholder="Escribe aquí..."></textarea>
+          <div class="obs-controls">
+            <select [(ngModel)]="tipoObservacion">
+              <option value="General">General</option>
+              <option value="Conducta">Conducta</option>
+              <option value="Académico">Académico</option>
+              <option value="Social">Social</option>
+            </select>
+            <button class="btn-add" (click)="addObservation()">Añadir</button>
           </div>
-          <button class="btn-add-observation" (click)="addObservation()">Añadir Observación</button>
         </div>
 
         <div class="observations-right">
-          <h2>Historial de Observaciones</h2>
-          <table class="observations-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Contenido</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let obs of observaciones">
-                <td>{{ obs.fecha }}</td>
-                <td>{{ obs.tipo }}</td>
-                <td>{{ obs.contenido }}</td>
-                <td><button class="btn-open">Abrir</button></td>
-              </tr>
-            </tbody>
-          </table>
+          <h2>Historial</h2>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Contenido</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let obs of observaciones">
+                  <td>{{ obs.fecha | date:'dd/MM/yy' }}</td>
+                  <td><span class="badge">{{ obs.tipo }}</span></td>
+                  <td>{{ obs.contenido }}</td>
+                </tr>
+                <tr *ngIf="observaciones.length === 0">
+                  <td colspan="3">No hay observaciones registradas.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<ng-template #loadingTemplate>
+  <div class="loader-container">
+    <div class="spinner"></div>
+    <p>Cargando información del alumno...</p>
+    <div class="loader-actions">
+      <button class="btn-back" (click)="goBack()">Volver al Listado</button>
+    </div>
+  </div>
+</ng-template>

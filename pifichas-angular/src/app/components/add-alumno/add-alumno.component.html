@@ -1,0 +1,39 @@
+<div class="form-container">
+  <h2 class="title">Registro de Nuevo Estudiante</h2>
+  
+  <form (ngSubmit)="registrar()" #alumnoForm="ngForm">
+    <div class="input-group">
+      <label>Nombre</label>
+      <input type="text" [(ngModel)]="nuevoAlumno.nombre" name="nombre" required placeholder="Ej: Juan">
+    </div>
+
+    <div class="input-group">
+      <label>Apellidos</label>
+      <input type="text" [(ngModel)]="nuevoAlumno.apellidos" name="apellidos" required placeholder="Ej: Pérez García">
+    </div>
+
+    <div class="input-group">
+      <label>DNI / NIE</label>
+      <input type="text" [(ngModel)]="nuevoAlumno.dni" name="dni" required placeholder="8 números y letra">
+    </div>
+
+    <div class="input-group">
+      <label>Fecha de Nacimiento</label>
+      <input type="date" [(ngModel)]="nuevoAlumno.fecha_nacimiento" name="fecha_nacimiento" required>
+    </div>
+
+    <div class="input-group">
+      <label>Teléfono Tutor</label>
+      <input type="text" [(ngModel)]="nuevoAlumno.contacto_tutor" name="contacto_tutor" placeholder="Opcional">
+    </div>
+
+    <div class="input-group">
+      <label>ID Curso (Opcional)</label>
+      <input type="number" [(ngModel)]="nuevoAlumno.id_curso" name="id_curso" placeholder="Número del curso">
+    </div>
+
+    <button type="submit" class="btn-save" [disabled]="!alumnoForm.valid">
+      Confirmar Registro
+    </button>
+  </form>
+</div>

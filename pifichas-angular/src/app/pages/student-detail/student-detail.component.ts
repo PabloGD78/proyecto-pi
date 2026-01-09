@@ -1,8 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // Añadido ChangeDetectorRef
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StudentService } from '../../services/student.service';
-import { Student } from '../../models/student';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -13,45 +12,83 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './student-detail.component.css'
 })
 export class StudentDetailComponent implements OnInit {
-  student: Student | null = null;
+  student: any = null;
   studentId: number | null = null;
   activeTab = 'datos';
   
-  // Form data for Datos Básicos
-  dni = 'Cargando...';
-  fechaNacimiento = 'Cargando...';
-  contactoTutor = 'Cargando...';
+  dni: string = '';
+  fechaNacimiento: string = '';
+  contactoTutor: string = '';
+  datosMedicos: string = '';
+  adaptacionesCurriculares: string = '';
+  id_ficha: number | null = null;
   
-  // Form data for Ficha
-  datosMedicos = '';
-  adaptacionesCurriculares = '';
-  
-  // Form data for Observaciones
-  nuevaObservacion = '';
-  tipoObservacion = '';
-  visibleAlTutor = false;
-  observaciones = [
-    { fecha: '12/05/2025', tipo: 'Conducta', contenido: 'Comentario de ejemplo de 120 caracteres para simular contenido.' },
-    { fecha: '28/04/2025', tipo: 'Académico', contenido: 'El alumno ha mostrado una gran mejoría en la asignatura de PI.' },
-    { fecha: '15/03/2025', tipo: 'Social', contenido: 'Requiere apoyo adicional en el trabajo en grupo con sus compañeros.' },
-  ];
+  nuevaObservacion: string = '';
+  tipoObservacion: string = 'General';
+  visibleAlTutor: boolean = false;
+  observaciones: any[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private studentService: StudentService
+    private studentService: StudentService,
+    private cdr: ChangeDetectorRef // Inyectamos esto para forzar el refresco visual
   ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe(params => {
-      this.studentId = +params['id'];
-      this.loadStudent(this.studentId);
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      this.studentId = +idParam;
+      this.loadStudentData(this.studentId);
+      this.loadObservations(this.studentId);
+    }
+  }
+
+  loadStudentData(id: number): void {
+    console.log('Solicitando datos para ID:', id);
+    this.studentService.getStudentById(id).subscribe({
+      next: (data: any) => {
+        // --- PASO CRÍTICO ---
+        // Asignamos el objeto student inmediatamente para que desaparezca el "Cargando"
+        this.student = data;
+        
+        // Usamos un try-catch para que si la fecha falla, no se bloquee el componente
+        try {
+          this.dni = data.dni || '';
+          this.contactoTutor = data.contacto_tutor || '';
+          this.datosMedicos = data.datos_medicos || '';
+          this.adaptacionesCurriculares = data.adaptacion_curriculares || '';
+          this.id_ficha = data.id_ficha;
+
+          if (data.fecha_nacimiento) {
+            const dateObj = new Date(data.fecha_nacimiento);
+            // Verificamos que la fecha sea válida antes de convertirla
+            if (!isNaN(dateObj.getTime())) {
+              this.fechaNacimiento = dateObj.toISOString().split('T')[0];
+            }
+          }
+        } catch (e) {
+          console.error("Error procesando campos secundarios:", e);
+        }
+
+        // Forzamos a Angular a que detecte los cambios (solución al error NG0505)
+        this.cdr.detectChanges();
+        console.log('Frontend actualizado con éxito:', this.student);
+      },
+      error: (err) => {
+        console.error('Error en la recepción de datos:', err);
+      }
     });
   }
 
-  loadStudent(id: number): void {
-    const students = this.studentService.getStudents();
-    this.student = students.find(s => s.id === id) || null;
+  loadObservations(id: number): void {
+    this.studentService.getObservations(id).subscribe({
+      next: (data) => {
+        this.observaciones = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.warn('Sin observaciones')
+    });
   }
 
   selectTab(tab: string): void {
@@ -59,35 +96,58 @@ export class StudentDetailComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/home']);
+    this.router.navigate(['/alumnos']); 
   }
 
   saveChanges(): void {
-    alert('Cambios guardados');
+    if (!this.studentId) return;
+
+    const updateData = {
+      dni: this.dni,
+      fecha_nacimiento: this.fechaNacimiento,
+      contacto_tutor: this.contactoTutor,
+      datos_medicos: this.datosMedicos,
+      adaptacion_curriculares: this.adaptacionesCurriculares,
+      id_ficha: this.id_ficha
+    };
+
+    this.studentService.saveStudentDetail(this.studentId, updateData).subscribe({
+      next: (response: any) => {
+        alert('¡Información actualizada!');
+        if (response.id_ficha) this.id_ficha = response.id_ficha;
+        this.loadStudentData(this.studentId!);
+      },
+      error: (err) => alert('Error al guardar.')
+    });
   }
 
   addObservation(): void {
-    if (this.nuevaObservacion.trim()) {
-      const today = new Date().toLocaleDateString('es-ES');
-      this.observaciones.unshift({
-        fecha: today,
-        tipo: this.tipoObservacion || 'Otro',
-        contenido: this.nuevaObservacion
-      });
-      this.nuevaObservacion = '';
-      this.tipoObservacion = '';
-    }
+    if (!this.nuevaObservacion.trim() || !this.studentId) return;
+
+    const obsData = { 
+      contenido: this.nuevaObservacion, 
+      tipo: this.tipoObservacion, 
+      visible_tutor: this.visibleAlTutor 
+    };
+
+    this.studentService.addObservation(this.studentId, obsData).subscribe({
+      next: () => {
+        this.loadObservations(this.studentId!);
+        this.nuevaObservacion = '';
+        alert('Observación añadida.');
+      }
+    });
   }
 
   getStudentInitials(): string {
-    if (this.student) {
-      const parts = this.student.nombre.split(' ');
-      return parts[0].charAt(0).toUpperCase() + (parts[1]?.charAt(0).toUpperCase() || '');
+    if (this.student?.nombre) {
+      return (this.student.nombre.charAt(0) + (this.student.apellidos ? this.student.apellidos.charAt(0) : '')).toUpperCase();
     }
-    return '';
+    return 'AL';
   }
 
-  generateReport(): void {
-    alert('Generando informe rápido...');
+  // Función para el botón de PDF
+  generarPDF(): void {
+    window.print();
   }
 }

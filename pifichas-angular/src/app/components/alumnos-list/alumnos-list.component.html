@@ -1,0 +1,45 @@
+<div class="container">
+  <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
+    <h1>Gestión de Alumnos</h1>
+    <button (click)="mostrarFormulario = !mostrarFormulario" class="btn-add">
+      {{ mostrarFormulario ? '← Volver' : '+ Añadir Alumno' }}
+    </button>
+  </div>
+
+  <hr>
+
+  @if (mostrarFormulario) {
+    <div class="fade-in">
+       <app-add-alumno (guardado)="onAlumnoGuardado()"></app-add-alumno>
+    </div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre Completo</th>
+          <th>Grupo</th>
+          <th>Modificación</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (alumno of alumnos; track alumno.id) {
+          <tr>
+            <td>{{ alumno.id }}</td>
+            <td>{{ alumno.nombre }} {{ alumno.apellidos }}</td>
+            <td>{{ alumno.grupo || 'N/A' }}</td>
+            <td>{{ alumno.ultima_modificacion | date:'shortDate' }}</td>
+            <td>
+              <button class="btn-view" (click)="verDetalle(alumno.id)">Ver Ficha</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" style="text-align: center;">No hay alumnos registrados.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

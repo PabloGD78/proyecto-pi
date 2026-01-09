@@ -1,5 +1,3 @@
-// pi_backend/indexpi.js
-
 const express = require('express');
 const app = express();
 const PORT = 3000;
@@ -7,96 +5,143 @@ const bcrypt = require('bcrypt');
 const mysql = require('mysql'); 
 const cors = require('cors'); 
 
-
-
+// 1. Configuración de la conexión
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: '', 
-    database: 'ficha/informe'     
+    database: 'ficha/informe'
 });
 
 db.connect(err => {
-    if (err) {
-        console.error('Error al conectar a MySQL:', err);
-        return;
+    if (err) { 
+        console.error('Error al conectar a MySQL:', err); 
+        return; 
     }
-    console.log('Conexión a MySQL establecida.');
+    console.log('Conexión a MySQL establecida correctamente en el puerto 3000.');
 });
 
-
-// 2. Middleware esencial
 app.use(express.json()); 
-app.use(cors()); // Permite peticiones desde Flutter
+app.use(cors());
 
+// --- RUTAS DE ALUMNOS ---
 
-// 3. RUTA DE PRUEBA (GET /)
-app.get('/', (req, res) => {
-  res.send('¡Servidor del Backend de PI (Node.js/Express) está funcionando!');
+// A. Obtener todos los alumnos
+app.get('/alumnos', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const query = `
+    SELECT a.*, f.datos_medicos, f.adaptacion_curriculares 
+    FROM alumno a 
+    LEFT JOIN ficha f ON a.id_ficha = f.id_ficha`;
+  db.query(query, (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
 });
 
+// B. Añadir nuevo alumno
+app.post('/alumnos', (req, res) => {
+    const { nombre, apellidos, dni, fecha_nacimiento, contacto_tutor } = req.body;
+    const query = `
+        INSERT INTO alumno (nombre, apellidos, dni, fecha_nacimiento, contacto_tutor, ultima_modificacion) 
+        VALUES (?, ?, ?, ?, ?, NOW())`;
+    db.query(query, [nombre, apellidos, dni, fecha_nacimiento, contacto_tutor], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(201).json({ message: "Éxito", id: result.insertId });
+    });
+});
 
-// 4. 🔑 RUTA DE AUTENTICACIÓN (POST /login)
-app.post('/login', (req, res) => {
-    console.log('-------------------------------------------');
-    console.log('¡SOLICITUD DE LOGIN RECIBIDA DE FLUTTER!');
-    
-    // Obtiene los campos enviados desde Flutter
-    const { correo, contrasenia } = req.body; 
-    console.log(`Intentando login para: ${correo}`);
-    
-    if (!correo || !contrasenia) {
-        return res.status(400).json({ message: 'Faltan campos (correo o contrasenia).' });
-    }
-    
-    // ⚠️ PASO 2: LÓGICA DE BÚSQUEDA Y COMPARACIÓN CON MYSQL
-    // Busca al profesor por email y que esté activo
-    db.query('SELECT * FROM profesor WHERE email = ? AND activo = 1', [correo], (err, results) => {
+// C. Detalle del alumno (CORREGIDO PARA EVITAR PANTALLA CARGANDO)
+app.get('/alumnos/:id', (req, res) => {
+    console.log(`Petición recibida: Detalle del alumno ID ${req.params.id}`);
+    const query = `
+        SELECT a.*, f.datos_medicos, f.adaptacion_curriculares, f.id_ficha 
+        FROM alumno a 
+        LEFT JOIN ficha f ON a.id_ficha = f.id_ficha 
+        WHERE a.id = ?`;
+    db.query(query, [req.params.id], (err, results) => {
         if (err) {
-            console.error('Error al buscar profesor:', err);
-            return res.status(500).json({ message: 'Error interno del servidor.' });
+            console.error("Error en la consulta SQL:", err);
+            return res.status(500).json({ error: err.message });
         }
+        if (results.length === 0) return res.status(404).json({ message: "No encontrado" });
         
-        // El profesor no existe o no está activo
-        if (results.length === 0) {
-            console.log('Error: Profesor no encontrado o inactivo.');
-            return res.status(401).json({ message: 'Credenciales no válidas.' });
-        }
-        
-        const profesorEnDB = results[0]; // Primer resultado (el profesor)
-        const storedHash = profesorEnDB.password_hash; // El hash de la DB
+        console.log("Datos enviados al frontend con éxito.");
+        res.json(results[0]);
+    });
+});
 
-        // Comparar la contraseña plana de Flutter con el hash de la DB
-        bcrypt.compare(contrasenia, storedHash, (err, result) => {
-            if (err) {
-                console.error('Error al comparar hash:', err);
-                return res.status(500).json({ message: 'Error interno del servidor.' });
-            }
-            
-            if (result) {
-                console.log('¡Autenticación exitosa!');
-                // Éxito: Devuelve 200/202 y los datos del profesor
-                return res.status(200).json({ 
-                    message: 'Login exitoso', 
-                    // Se devuelve la data que Flutter necesita
-                    profesor: { 
-                        id: profesorEnDB.id, 
-                        nombre: profesorEnDB.nombre,
-                        email: profesorEnDB.email,
-                        rol: profesorEnDB.rol 
-                    } 
+// D. Guardar cambios (CORREGIDO: Crea la ficha si no existe)
+app.put('/alumnos/:id/guardar', (req, res) => {
+    const { dni, fecha_nacimiento, contacto_tutor, datos_medicos, adaptacion_curriculares, id_ficha } = req.body;
+    const studentId = req.params.id;
+
+    console.log(`Guardando cambios para alumno ${studentId}...`);
+
+    // 1. Siempre actualizamos la tabla alumno
+    db.query("UPDATE alumno SET dni = ?, fecha_nacimiento = ?, contacto_tutor = ?, ultima_modificacion = NOW() WHERE id = ?", 
+    [dni, fecha_nacimiento, contacto_tutor, studentId], (err) => {
+        if (err) return res.status(500).json({ error: "Error en tabla alumno" });
+
+        if (id_ficha) {
+            // Caso A: Ya tiene ficha vinculada, la actualizamos
+            db.query("UPDATE ficha SET datos_medicos = ?, adaptacion_curriculares = ? WHERE id_ficha = ?", 
+            [datos_medicos, adaptacion_curriculares, id_ficha], (err) => {
+                if (err) return res.status(500).json({ error: "Error en tabla ficha" });
+                res.json({ message: "Guardado completo (Ficha actualizada)" });
+            });
+        } else {
+            // Caso B: El alumno tiene id_ficha en NULL. Creamos la ficha primero.
+            console.log("Detectado id_ficha NULL. Creando nueva ficha...");
+            db.query("INSERT INTO ficha (datos_medicos, adaptacion_curriculares, fecha_creacion) VALUES (?, ?, NOW())",
+            [datos_medicos, adaptacion_curriculares], (err, fichaResult) => {
+                if (err) return res.status(500).json({ error: "Error al crear nueva ficha" });
+                
+                const newFichaId = fichaResult.insertId;
+                // Vinculamos la nueva ficha al alumno
+                db.query("UPDATE alumno SET id_ficha = ? WHERE id = ?", [newFichaId, studentId], (err) => {
+                    if (err) return res.status(500).json({ error: "Error al vincular ficha" });
+                    res.json({ message: "Ficha creada y alumno actualizado", id_ficha: newFichaId });
                 });
+            });
+        }
+    });
+});
+
+// --- RUTAS DE OBSERVACIONES ---
+
+app.get('/alumnos/:id/observaciones', (req, res) => {
+    db.query('SELECT * FROM observacion WHERE id_alumno = ? ORDER BY fecha DESC', [req.params.id], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+app.post('/alumnos/:id/observacion', (req, res) => {
+    const { contenido, tipo, visible_tutor } = req.body;
+    const query = 'INSERT INTO observacion (id_alumno, contenido, tipo, visible_tutor, fecha) VALUES (?, ?, ?, ?, NOW())';
+    db.query(query, [req.params.id, contenido, tipo, visible_tutor], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(201).json({ message: "Añadida" });
+    });
+});
+
+// --- RUTA DE LOGIN ---
+
+app.post('/login', (req, res) => {
+    const { correo, contrasenia } = req.body; 
+    db.query('SELECT * FROM profesor WHERE email = ? AND activo = 1', [correo], (err, results) => {
+        if (err || results.length === 0) return res.status(401).json({ message: 'Error de acceso.' });
+        
+        const prof = results[0];
+        bcrypt.compare(contrasenia, prof.password_hash, (err, matches) => {
+            if (matches) {
+                res.status(200).json({ message: 'OK', profesor: { id: prof.id, nombre: prof.nombre } });
             } else {
-                // Contraseña incorrecta
-                console.log('Error: Contraseña no coincide.');
-                return res.status(401).json({ message: 'Credenciales no válidas.' });
+                res.status(401).json({ message: 'Contraseña incorrecta.' });
             }
         });
     });
 });
 
-
-// 5. Iniciar el servidor
-app.listen(PORT, () => {
-  console.log(`Servidor de Node.js ejecutándose en http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));

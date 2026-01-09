@@ -1,63 +1,45 @@
 import { Injectable } from '@angular/core';
-import { Student } from '../models/student';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StudentService {
-  private students: Student[] = [
-    {
-      id: 101,
-      nombre: 'Juan Martínez Guerrero',
-      grupo: 'DAW 2',
-      ultimaModificacion: '10/11/2025',
-    },
-    {
-      id: 102,
-      nombre: 'Andrés González Pérez',
-      grupo: 'DAM 1',
-      ultimaModificacion: '24/10/2025',
-    },
-    {
-      id: 103,
-      nombre: 'Lucia Guerra León',
-      grupo: 'DAW 2',
-      ultimaModificacion: '13/10/2025',
-    },
-    {
-      id: 104,
-      nombre: 'Antonio Martínez López',
-      grupo: 'DAM 2',
-      ultimaModificacion: '08/10/2025',
-    },
-    {
-      id: 105,
-      nombre: 'Andrea Dorado González',
-      grupo: 'DAW 1',
-      ultimaModificacion: '30/09/2025',
-    },
-  ];
+  // Asegúrate de que esta URL es accesible desde tu navegador
+  private apiUrl = 'http://localhost:3000/alumnos';
 
-  getStudents(): Student[] {
-    return this.students;
+  constructor(private http: HttpClient) { }
+
+  // 1. Obtener lista de todos los alumnos
+  getStudents(): Observable<any[]> {
+    return this.http.get<any[]>(this.apiUrl);
   }
 
-  getStudentById(id: number): Student | undefined {
-    return this.students.find(s => s.id === id);
+  // 2. Obtener detalle de un alumno (Carga datos personales + ficha médica)
+  // Esta función es la que rellena la vista del "Informe"
+  getStudentById(id: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`);
   }
 
-  addStudent(student: Student): void {
-    this.students.push(student);
+  // 3. Crear un nuevo alumno en la base de datos
+  crearAlumno(alumno: any): Observable<any> {
+    return this.http.post<any>(this.apiUrl, alumno);
   }
 
-  updateStudent(student: Student): void {
-    const index = this.students.findIndex(s => s.id === student.id);
-    if (index !== -1) {
-      this.students[index] = student;
-    }
+  // 4. Guardar los cambios realizados en el detalle o la ficha
+  // Envía los datos a la ruta /alumnos/:id/guardar del backend
+  saveStudentDetail(id: number, data: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}/guardar`, data);
   }
 
-  deleteStudent(id: number): void {
-    this.students = this.students.filter(s => s.id !== id);
+  // 5. Obtener el historial de observaciones del alumno
+  getObservations(studentId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${studentId}/observaciones`);
+  }
+
+  // 6. Añadir una nueva observación al historial
+  addObservation(studentId: number, observation: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${studentId}/observacion`, observation);
   }
 }
