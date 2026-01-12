@@ -16,6 +16,11 @@ export class StudentService {
     return this.http.get<any[]>(this.apiUrl);
   }
 
+  // Obtener lista de cursos
+  getCourses(): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:3000/cursos`);
+  }
+
   // 2. Obtener detalle de un alumno (Carga datos personales + ficha médica)
   // Esta función es la que rellena la vista del "Informe"
   getStudentById(id: number): Observable<any> {
@@ -41,5 +46,10 @@ export class StudentService {
   // 6. Añadir una nueva observación al historial
   addObservation(studentId: number, observation: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/${studentId}/observacion`, observation);
+  }
+
+  // 7. Borrar una observación por su id
+  deleteObservation(observationId: number): Observable<any> {
+    return this.http.delete<any>(`http://localhost:3000/observaciones/${observationId}`);
   }
 }

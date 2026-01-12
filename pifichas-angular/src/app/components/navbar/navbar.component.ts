@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -15,7 +16,12 @@ export class NavbarComponent implements OnInit {
   isGestionActive = true;
   isReportsActive = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private auth: AuthService) {}
+
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['/login']);
+  }
 
   ngOnInit(): void {
     this.router.events

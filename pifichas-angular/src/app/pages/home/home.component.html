@@ -20,11 +20,11 @@
       </div>
     </div>
 
-    <div *ngIf="loading" class="no-results">
+    <div *ngIf="loading && filteredStudents.length === 0" class="no-results">
       <p>Cargando datos del servidor...</p>
     </div>
 
-    <div class="table-container" *ngIf="!loading && filteredStudents.length > 0">
+    <div class="table-container" *ngIf="filteredStudents.length > 0">
       <table class="students-table">
         <thead class="table-header">
           <tr>
@@ -32,6 +32,7 @@
             <th>Nombre</th>
             <th>Apellidos</th>
             <th>DNI</th>
+            <th>Curso</th>
             <th>Contacto Tutor</th>
             <th class="action-cell">Acciones</th>
           </tr>
@@ -42,6 +43,7 @@
             <td>{{ student.nombre }}</td>
             <td>{{ student.apellidos }}</td>
             <td>{{ student.dni }}</td>
+            <td>{{ student.curso_nombre || (student.grupo || 'Sin curso') }}</td>
             <td>{{ student.contacto_tutor }}</td>
             <td class="action-cell">
               <button class="btn-report" (click)="goToDetail(student.id)">📋 Informe</button>

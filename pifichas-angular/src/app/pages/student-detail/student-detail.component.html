@@ -1,4 +1,4 @@
-<div class="detail-page" *ngIf="student; else loadingTemplate">
+<div id="informe" class="detail-page" *ngIf="student; else loadingTemplate">
   <div class="detail-header">
     <div class="header-left">
       <div class="avatar">
@@ -6,13 +6,9 @@
       </div>
       <div class="header-info">
         <h2>{{ student.nombre }} {{ student.apellidos }}</h2>
-        <p class="group">{{ student.id_curso ? 'Curso: ' + student.id_curso : 'Sin Curso' }}</p>
+        <p class="group">{{ student.curso_nombre ? 'Curso: ' + student.curso_nombre : 'Sin Curso' }}</p>
         <p class="student-id">ID Alumno: {{ student.id }}</p>
       </div>
-    </div>
-
-    <div class="header-title">
-      <h1>Gestión Individual de Alumno</h1>
     </div>
 
     <div class="header-actions">
@@ -72,7 +68,7 @@
 
       <div *ngIf="activeTab === 'observaciones'" class="tab-pane observations-tab">
         <div class="observations-left">
-          <h2>Añadir Observación</h2>
+          <h3>Añadir Observación</h3>
           <textarea [(ngModel)]="nuevaObservacion" rows="4" placeholder="Escribe aquí..."></textarea>
           <div class="obs-controls">
             <select [(ngModel)]="tipoObservacion">
@@ -86,7 +82,7 @@
         </div>
 
         <div class="observations-right">
-          <h2>Historial</h2>
+          <h3>Historial</h3>
           <div class="table-scroll">
             <table>
               <thead>
@@ -94,6 +90,7 @@
                   <th>Fecha</th>
                   <th>Tipo</th>
                   <th>Contenido</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -101,9 +98,12 @@
                   <td>{{ obs.fecha | date:'dd/MM/yy' }}</td>
                   <td><span class="badge">{{ obs.tipo }}</span></td>
                   <td>{{ obs.contenido }}</td>
+                  <td>
+                    <button class="btn-delete" (click)="confirmDeleteObservation(obs.id)">Borrar</button>
+                  </td>
                 </tr>
                 <tr *ngIf="observaciones.length === 0">
-                  <td colspan="3">No hay observaciones registradas.</td>
+                  <td colspan="4">No hay observaciones registradas.</td>
                 </tr>
               </tbody>
             </table>

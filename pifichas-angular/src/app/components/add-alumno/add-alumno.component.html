@@ -28,8 +28,8 @@
     </div>
 
     <div class="input-group">
-      <label>ID Curso (Opcional)</label>
-      <input type="number" [(ngModel)]="nuevoAlumno.id_curso" name="id_curso" placeholder="Número del curso">
+      <label>Curso (Opcional)</label>
+      <input type="text" [(ngModel)]="nuevoAlumno.curso_nombre" name="curso_nombre" placeholder="Nombre del curso (opcional)">
     </div>
 
     <button type="submit" class="btn-save" [disabled]="!alumnoForm.valid">

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StudentService } from '../../services/student.service';
@@ -53,7 +53,7 @@ export class AddAlumnoComponent {
     dni: '',
     fecha_nacimiento: '',
     contacto_tutor: '',
-    id_curso: null
+    curso_nombre: ''
   };
 
   constructor(private studentService: StudentService) {}
@@ -75,7 +75,7 @@ export class AddAlumnoComponent {
   resetForm() {
     this.nuevoAlumno = {
       nombre: '', apellidos: '', dni: '', 
-      fecha_nacimiento: '', contacto_tutor: '', id_curso: null 
+      fecha_nacimiento: '', contacto_tutor: '', curso_nombre: '' 
     };
   }
 }

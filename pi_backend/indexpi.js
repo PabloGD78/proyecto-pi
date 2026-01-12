@@ -29,10 +29,12 @@ app.use(cors());
 // A. Obtener todos los alumnos
 app.get('/alumnos', (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
+  // Incluimos el nombre del curso (si existe) para mostrarlo en el frontend
   const query = `
-    SELECT a.*, f.datos_medicos, f.adaptacion_curriculares 
-    FROM alumno a 
-    LEFT JOIN ficha f ON a.id_ficha = f.id_ficha`;
+    SELECT a.*, f.datos_medicos, f.adaptacion_curriculares, c.nombre AS curso_nombre
+    FROM alumno a
+    LEFT JOIN ficha f ON a.id_ficha = f.id_ficha
+    LEFT JOIN curso c ON a.id_curso = c.id`;
   db.query(query, (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(results);
@@ -41,23 +43,55 @@ app.get('/alumnos', (req, res) => {
 
 // B. Añadir nuevo alumno
 app.post('/alumnos', (req, res) => {
-    const { nombre, apellidos, dni, fecha_nacimiento, contacto_tutor } = req.body;
-    const query = `
-        INSERT INTO alumno (nombre, apellidos, dni, fecha_nacimiento, contacto_tutor, ultima_modificacion) 
-        VALUES (?, ?, ?, ?, ?, NOW())`;
-    db.query(query, [nombre, apellidos, dni, fecha_nacimiento, contacto_tutor], (err, result) => {
+    const { nombre, apellidos, dni, fecha_nacimiento, contacto_tutor, id_curso, curso_nombre } = req.body;
+
+    // helper que inserta alumno con el id de curso dado (puede ser NULL)
+    const insertAlumno = (cursoId) => {
+      const query = `
+        INSERT INTO alumno (nombre, apellidos, dni, fecha_nacimiento, contacto_tutor, id_curso, ultima_modificacion) 
+        VALUES (?, ?, ?, ?, ?, ?, NOW())`;
+      const cursoValue = cursoId || null;
+      db.query(query, [nombre, apellidos, dni, fecha_nacimiento, contacto_tutor, cursoValue], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ message: "Éxito", id: result.insertId });
-    });
+      });
+    };
+
+    // Si se ha enviado curso_nombre lo usamos (buscar o crear), sino usamos id_curso si existe
+    if (curso_nombre && String(curso_nombre).trim() !== '') {
+      const name = String(curso_nombre).trim();
+      db.query('SELECT id FROM curso WHERE nombre = ?', [name], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (results.length > 0) return insertAlumno(results[0].id);
+
+        // no existe el curso -> lo creamos
+        db.query('INSERT INTO curso (nombre, nivel) VALUES (?, ?)', [name, ''], (err, insertRes) => {
+          if (err) return res.status(500).json({ error: err.message });
+          insertAlumno(insertRes.insertId);
+        });
+      });
+    } else {
+      // usar id_curso si se pasó o NULL
+      insertAlumno(id_curso || null);
+    }
+});
+
+// RUTA: Obtener todos los cursos disponibles
+app.get('/cursos', (req, res) => {
+  db.query('SELECT id, nombre FROM curso ORDER BY nombre', (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
 });
 
 // C. Detalle del alumno (CORREGIDO PARA EVITAR PANTALLA CARGANDO)
 app.get('/alumnos/:id', (req, res) => {
     console.log(`Petición recibida: Detalle del alumno ID ${req.params.id}`);
     const query = `
-        SELECT a.*, f.datos_medicos, f.adaptacion_curriculares, f.id_ficha 
+        SELECT a.*, f.datos_medicos, f.adaptacion_curriculares, f.id_ficha, c.nombre AS curso_nombre
         FROM alumno a 
         LEFT JOIN ficha f ON a.id_ficha = f.id_ficha 
+        LEFT JOIN curso c ON a.id_curso = c.id
         WHERE a.id = ?`;
     db.query(query, [req.params.id], (err, results) => {
         if (err) {
@@ -124,6 +158,15 @@ app.post('/alumnos/:id/observacion', (req, res) => {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ message: "Añadida" });
     });
+});
+
+// Borrar una observación por su id
+app.delete('/observaciones/:id', (req, res) => {
+  db.query('DELETE FROM observacion WHERE id = ?', [req.params.id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'No encontrado' });
+    res.json({ message: 'Eliminada' });
+  });
 });
 
 // --- RUTA DE LOGIN ---
