@@ -105,6 +105,7 @@ app.get('/alumnos/:id', (req, res) => {
     });
 });
 
+
 // D. Guardar cambios (CORREGIDO: Crea la ficha si no existe)
 app.put('/alumnos/:id/guardar', (req, res) => {
     const { dni, fecha_nacimiento, contacto_tutor, datos_medicos, adaptacion_curriculares, id_ficha } = req.body;
