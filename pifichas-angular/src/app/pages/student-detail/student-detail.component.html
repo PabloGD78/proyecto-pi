@@ -1,4 +1,9 @@
 <div id="informe" class="detail-page" *ngIf="student; else loadingTemplate">
+  <!-- Notificación -->
+  <div *ngIf="showNotification" class="notification" [ngClass]="notificationType">
+    {{ notificationMessage }}
+  </div>
+
   <div class="detail-header">
     <div class="header-left">
       <div class="avatar">
@@ -28,6 +33,9 @@
       </button>
       <button class="tab-button" [class.active]="activeTab === 'observaciones'" (click)="selectTab('observaciones')">
         Observaciones
+      </button>
+      <button class="tab-button" [class.active]="activeTab === 'modulos'" (click)="selectTab('modulos')">
+        Módulos
       </button>
     </div>
 
@@ -107,6 +115,77 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'modulos'" class="tab-pane">
+        <h2>Módulos y Asignaturas</h2>
+        
+        <div class="modulos-container">
+          <div class="modulos-left">
+            <h3>Añadir Nuevo Módulo</h3>
+            <div class="form-section">
+              <div class="form-group">
+                <label>Nombre del Módulo *</label>
+                <input type="text" name="nombre" [(ngModel)]="nuevoModulo.nombre" placeholder="Ej: Matemáticas">
+              </div>
+              <div class="form-group">
+                <label>Código (Opcional)</label>
+                <input type="text" name="codigo" [(ngModel)]="nuevoModulo.codigo" placeholder="Ej: MAT001">
+              </div>
+              <div class="form-group">
+                <label>Horas</label>
+                <input type="number" name="horas" [(ngModel)]="nuevoModulo.horas" placeholder="0">
+              </div>
+              <div class="form-group">
+                <label>Calificación (Opcional)</label>
+                <input type="number" name="calificacion" [(ngModel)]="nuevoModulo.calificacion" placeholder="0-10" min="0" max="10" step="0.5">
+              </div>
+              <div class="form-group">
+                <label>Estado</label>
+                <select name="estado" [(ngModel)]="nuevoModulo.estado">
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="En Progreso">En Progreso</option>
+                  <option value="Aprobado">Aprobado</option>
+                  <option value="Suspenso">Suspenso</option>
+                </select>
+              </div>
+              <button class="btn-add" (click)="addModulo()">Agregar Módulo</button>
+            </div>
+          </div>
+
+          <div class="modulos-right">
+            <h3>Módulos Registrados</h3>
+            <div class="table-scroll">
+              <table *ngIf="modulos.length > 0">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Código</th>
+                    <th>Horas</th>
+                    <th>Calificación</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let mod of modulos">
+                    <td>{{ mod.nombre }}</td>
+                    <td>{{ mod.codigo || '-' }}</td>
+                    <td>{{ mod.horas }}</td>
+                    <td>{{ mod.calificacion ? mod.calificacion + '/10' : '-' }}</td>
+                    <td><span class="badge" [ngClass]="mod.estado.toLowerCase().replace(' ', '-')">{{ mod.estado }}</span></td>
+                    <td>
+                      <button class="btn-delete" (click)="deleteModulo(mod.id)">Eliminar</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div *ngIf="modulos.length === 0" class="no-data">
+                No hay módulos registrados.
+              </div>
+            </div>
           </div>
         </div>
       </div>

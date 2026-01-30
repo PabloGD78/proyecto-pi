@@ -2,6 +2,7 @@ import { Component, EventEmitter, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StudentService } from '../../services/student.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-add-alumno',
@@ -42,6 +43,43 @@ import { StudentService } from '../../services/student.service';
     }
     .btn-save:hover { background: #219150; }
     .btn-save:disabled { background: #bdc3c7; cursor: not-allowed; }
+    .notification {
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      font-weight: 500;
+      animation: slideDown 0.3s ease-out;
+    }
+    .notification.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .notification.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .notification.info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .notification.warning {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
+    }
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   `]
 })
 export class AddAlumnoComponent {
@@ -56,18 +94,25 @@ export class AddAlumnoComponent {
     curso_nombre: ''
   };
 
-  constructor(private studentService: StudentService) {}
+  notificationMessage: string = '';
+  notificationType: 'success' | 'error' | 'info' | 'warning' = 'info';
+  showNotification: boolean = false;
+
+  constructor(
+    private studentService: StudentService,
+    private notificationService: NotificationService
+  ) {}
 
   registrar() {
     this.studentService.crearAlumno(this.nuevoAlumno).subscribe({
       next: (res: any) => {
-        alert('✅ Alumno registrado y ficha vinculada con éxito');
+        this.showNotificationMessage('✅ Alumno registrado y ficha vinculada con éxito', 'success');
         this.resetForm();
         this.guardado.emit(); // Cierra el formulario y refresca la tabla
       },
       error: (err: any) => {
         console.error('Error al registrar:', err);
-        alert('❌ Error al guardar. Revisa que el servidor esté encendido.');
+        this.showNotificationMessage('❌ Error al guardar. Revisa que el servidor esté encendido.', 'error');
       }
     });
   }
@@ -77,5 +122,16 @@ export class AddAlumnoComponent {
       nombre: '', apellidos: '', dni: '', 
       fecha_nacimiento: '', contacto_tutor: '', curso_nombre: '' 
     };
+  }
+
+  showNotificationMessage(message: string, type: 'success' | 'error' | 'info' | 'warning'): void {
+    this.notificationMessage = message;
+    this.notificationType = type;
+    this.showNotification = true;
+    
+    // Auto-ocultar después de 4 segundos
+    setTimeout(() => {
+      this.showNotification = false;
+    }, 4000);
   }
 }

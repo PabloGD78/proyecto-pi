@@ -6,6 +6,11 @@
     </button>
   </div>
 
+  <!-- Notificación -->
+  <div *ngIf="showNotification" class="notification" [ngClass]="notificationType">
+    {{ notificationMessage }}
+  </div>
+
   <div *ngIf="mostrarFormulario">
     <app-add-alumno (guardado)="onAlumnoGuardado()"></app-add-alumno>
   </div>
@@ -47,6 +52,7 @@
             <td>{{ student.contacto_tutor }}</td>
             <td class="action-cell">
               <button class="btn-report" (click)="goToDetail(student.id)">📋 Informe</button>
+              <button class="btn-delete" (click)="confirmDeleteStudent(student.id, student.nombre, student.apellidos)">🗑️ Eliminar</button>
             </td>
           </tr>
         </tbody>

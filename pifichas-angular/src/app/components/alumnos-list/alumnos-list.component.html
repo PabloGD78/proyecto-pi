@@ -6,6 +6,11 @@
     </button>
   </div>
 
+  <!-- Notificación -->
+  <div *ngIf="showNotification" class="notification" [ngClass]="notificationType">
+    {{ notificationMessage }}
+  </div>
+
   <hr>
 
   @if (mostrarFormulario) {
@@ -32,6 +37,7 @@
             <td>{{ alumno.ultima_modificacion | date:'shortDate' }}</td>
             <td>
               <button class="btn-view" (click)="verDetalle(alumno.id)">Ver Ficha</button>
+              <button class="btn-delete" (click)="confirmDeleteStudent(alumno.id, alumno.nombre, alumno.apellidos)">Eliminar</button>
             </td>
           </tr>
         } @empty {

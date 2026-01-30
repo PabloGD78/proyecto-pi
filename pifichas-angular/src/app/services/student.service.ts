@@ -52,4 +52,29 @@ export class StudentService {
   deleteObservation(observationId: number): Observable<any> {
     return this.http.delete<any>(`http://localhost:3000/observaciones/${observationId}`);
   }
+
+  // 8. Eliminar un alumno completamente
+  deleteStudent(studentId: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${studentId}`);
+  }
+
+  // 9. Obtener todos los módulos de un alumno
+  getModulos(studentId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${studentId}/modulos`);
+  }
+
+  // 10. Agregar un nuevo módulo
+  addModulo(studentId: number, modulo: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${studentId}/modulo`, modulo);
+  }
+
+  // 11. Actualizar un módulo
+  updateModulo(moduloId: number, modulo: any): Observable<any> {
+    return this.http.put<any>(`http://localhost:3000/modulos/${moduloId}`, modulo);
+  }
+
+  // 12. Eliminar un módulo
+  deleteModulo(moduloId: number): Observable<any> {
+    return this.http.delete<any>(`http://localhost:3000/modulos/${moduloId}`);
+  }
 }

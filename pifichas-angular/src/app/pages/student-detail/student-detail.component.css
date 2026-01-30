@@ -329,3 +329,132 @@ body.generating-pdf .btn-add,
 body.generating-pdf .obs-controls {
   display: none !important;
 }
+
+/* Notificaciones */
+.notification {
+  padding: 16px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease-out;
+  border-left: 4px solid;
+}
+
+.notification.success {
+  background-color: #d4edda;
+  color: #155724;
+  border-left-color: #28a745;
+}
+
+.notification.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-left-color: #c62828;
+}
+
+.notification.info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border-left-color: #1a73e8;
+}
+
+.notification.warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border-left-color: #ffc107;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Módulos */
+.modulos-container {
+  display: flex;
+  gap: 40px;
+}
+
+.modulos-left {
+  flex: 1;
+}
+
+.modulos-right {
+  flex: 1.5;
+}
+
+.modulos-left h3,
+.modulos-right h3 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 18px;
+}
+
+.modulos-left .form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.modulos-left .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modulos-left label {
+  font-weight: 600;
+  color: #1a73e8;
+  font-size: 14px;
+}
+
+.modulos-left input,
+.modulos-left select {
+  padding: 12px;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #222;
+  transition: all 0.3s;
+}
+
+.modulos-left input:focus,
+.modulos-left select:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 8px rgba(26, 115, 232, 0.08);
+}
+
+.no-data {
+  padding: 30px;
+  text-align: center;
+  color: #999;
+  font-style: italic;
+}
+
+.badge.pendiente {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.badge.en-progreso {
+  background-color: #cfe2ff;
+  color: #084298;
+}
+
+.badge.aprobado {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.badge.suspenso {
+  background-color: #f8d7da;
+  color: #842029;
+}

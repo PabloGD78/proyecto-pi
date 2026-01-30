@@ -5,6 +5,7 @@ import autoTable from 'jspdf-autotable';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StudentService } from '../../services/student.service';
+import { NotificationService } from '../../services/notification.service';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -31,10 +32,24 @@ export class StudentDetailComponent implements OnInit {
   visibleAlTutor: boolean = false;
   observaciones: any[] = [];
 
+  modulos: any[] = [];
+  nuevoModulo = {
+    nombre: '',
+    codigo: '',
+    horas: 0,
+    calificacion: null,
+    estado: 'Pendiente'
+  };
+
+  notificationMessage: string = '';
+  notificationType: 'success' | 'error' | 'info' | 'warning' = 'info';
+  showNotification: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private studentService: StudentService,
+    private notificationService: NotificationService,
     private cdr: ChangeDetectorRef // Inyectamos esto para forzar el refresco visual
   ) {}
 
@@ -44,6 +59,7 @@ export class StudentDetailComponent implements OnInit {
       this.studentId = +idParam;
       this.loadStudentData(this.studentId);
       this.loadObservations(this.studentId);
+      this.loadModulos(this.studentId);
     }
   }
 
@@ -94,6 +110,16 @@ export class StudentDetailComponent implements OnInit {
     });
   }
 
+  loadModulos(id: number): void {
+    this.studentService.getModulos(id).subscribe({
+      next: (data) => {
+        this.modulos = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.warn('Sin módulos registrados')
+    });
+  }
+
   selectTab(tab: string): void {
     this.activeTab = tab;
   }
@@ -117,11 +143,11 @@ export class StudentDetailComponent implements OnInit {
 
     this.studentService.saveStudentDetail(this.studentId, updateData).subscribe({
       next: (response: any) => {
-        alert('¡Información actualizada!');
+        this.showNotificationMessage('¡Información actualizada!', 'success');
         if (response.id_ficha) this.id_ficha = response.id_ficha;
         this.loadStudentData(this.studentId!);
       },
-      error: (err) => alert('Error al guardar.')
+      error: (err) => this.showNotificationMessage('Error al guardar.', 'error')
     });
   }
 
@@ -138,7 +164,7 @@ export class StudentDetailComponent implements OnInit {
       next: () => {
         this.loadObservations(this.studentId!);
         this.nuevaObservacion = '';
-        alert('Observación añadida.');
+        this.showNotificationMessage('Observación añadida.', 'success');
       }
     });
   }
@@ -152,9 +178,9 @@ export class StudentDetailComponent implements OnInit {
     this.studentService.deleteObservation(obsId).subscribe({
       next: () => {
         if (this.studentId) this.loadObservations(this.studentId);
-        alert('Observación eliminada.');
+        this.showNotificationMessage('Observación eliminada.', 'success');
       },
-      error: () => alert('Error al eliminar la observación.')
+      error: () => this.showNotificationMessage('Error al eliminar la observación.', 'error')
     });
   }
 
@@ -239,5 +265,53 @@ export class StudentDetailComponent implements OnInit {
 
     const safeName = `informe-${(this.student.nombre || 'alumno').replace(/\s+/g, '_')}-${this.student.id || 'id'}.pdf`;
     pdf.save(safeName);
+  }
+
+  showNotificationMessage(message: string, type: 'success' | 'error' | 'info' | 'warning'): void {
+    this.notificationMessage = message;
+    this.notificationType = type;
+    this.showNotification = true;
+    
+    // Auto-ocultar después de 4 segundos
+    setTimeout(() => {
+      this.showNotification = false;
+    }, 4000);
+  }
+
+  addModulo(): void {
+    if (!this.nuevoModulo.nombre.trim() || !this.studentId) {
+      console.warn('Validación fallida: nombre o studentId vacío');
+      return;
+    }
+
+    console.log('Agregando módulo:', this.nuevoModulo, 'Para alumno:', this.studentId);
+
+    this.studentService.addModulo(this.studentId, this.nuevoModulo).subscribe({
+      next: (response) => {
+        console.log('Módulo agregado exitosamente:', response);
+        this.loadModulos(this.studentId!);
+        this.nuevoModulo = { nombre: '', codigo: '', horas: 0, calificacion: null, estado: 'Pendiente' };
+        this.showNotificationMessage('✅ Módulo añadido correctamente', 'success');
+      },
+      error: (err) => {
+        console.error('Error al agregar módulo:', err);
+        this.showNotificationMessage('❌ Error al agregar el módulo', 'error');
+      }
+    });
+  }
+
+  deleteModulo(moduloId: number): void {
+    if (!confirm('¿Estás seguro de que deseas eliminar este módulo?')) return;
+    
+    this.studentService.deleteModulo(moduloId).subscribe({
+      next: () => {
+        if (this.studentId) this.loadModulos(this.studentId);
+        this.showNotificationMessage('✅ Módulo eliminado correctamente', 'success');
+      },
+      error: (err) => {
+        console.error('Error al eliminar módulo:', err);
+        this.showNotificationMessage('❌ Error al eliminar el módulo', 'error');
+      }
+    });
   }
 }

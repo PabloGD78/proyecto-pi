@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { StudentService } from '../../services/student.service';
+import { NotificationService } from '../../services/notification.service';
 import { AddAlumnoComponent } from '../../components/add-alumno/add-alumno.component';
 
 @Component({
@@ -20,7 +21,11 @@ export class HomeComponent implements OnInit {
   loading = true;
   mostrarFormulario = false;
 
-  constructor(private studentService: StudentService, private router: Router, private cdr: ChangeDetectorRef) {}
+  notificationMessage: string = '';
+  notificationType: 'success' | 'error' | 'info' | 'warning' = 'info';
+  showNotification: boolean = false;
+
+  constructor(private studentService: StudentService, private notificationService: NotificationService, private router: Router, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void { this.loadStudents(); }
 
@@ -85,5 +90,37 @@ export class HomeComponent implements OnInit {
 
   goToDetail(id: number): void {
     if (id) this.router.navigate(['/student', id]);
+  }
+
+  confirmDeleteStudent(id: number | undefined, nombre: string, apellidos: string): void {
+    if (!id) return;
+    const fullName = `${nombre} ${apellidos}`;
+    if (confirm(`¿Estás seguro de que deseas eliminar a ${fullName}? Esta acción no se puede deshacer.`)) {
+      this.deleteStudent(id);
+    }
+  }
+
+  deleteStudent(id: number): void {
+    this.studentService.deleteStudent(id).subscribe({
+      next: () => {
+        this.showNotificationMessage('✅ Alumno eliminado correctamente', 'success');
+        this.loadStudents();
+      },
+      error: (err) => {
+        console.error('Error al eliminar:', err);
+        this.showNotificationMessage('❌ Error al eliminar el alumno', 'error');
+      }
+    });
+  }
+
+  showNotificationMessage(message: string, type: 'success' | 'error' | 'info' | 'warning'): void {
+    this.notificationMessage = message;
+    this.notificationType = type;
+    this.showNotification = true;
+    
+    // Auto-ocultar después de 4 segundos
+    setTimeout(() => {
+      this.showNotification = false;
+    }, 4000);
   }
 }

@@ -170,6 +170,79 @@ app.delete('/observaciones/:id', (req, res) => {
   });
 });
 
+// E. Eliminar un alumno por su id
+app.delete('/alumnos/:id', (req, res) => {
+  const studentId = req.params.id;
+  console.log(`Eliminando alumno con ID ${studentId}...`);
+
+  // Primero obtenemos el id_ficha del alumno
+  db.query('SELECT id_ficha FROM alumno WHERE id = ?', [studentId], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (results.length === 0) return res.status(404).json({ message: 'Alumno no encontrado' });
+
+    const idFicha = results[0].id_ficha;
+
+    // Eliminamos las observaciones asociadas
+    db.query('DELETE FROM observacion WHERE id_alumno = ?', [studentId], (err) => {
+      if (err) return res.status(500).json({ error: 'Error al eliminar observaciones' });
+
+      // Eliminamos el alumno
+      db.query('DELETE FROM alumno WHERE id = ?', [studentId], (err) => {
+        if (err) return res.status(500).json({ error: 'Error al eliminar alumno' });
+
+        // Eliminamos la ficha si existe y está vinculada
+        if (idFicha) {
+          db.query('DELETE FROM ficha WHERE id_ficha = ?', [idFicha], (err) => {
+            if (err) return res.status(500).json({ error: 'Error al eliminar ficha' });
+            res.json({ message: 'Alumno, observaciones y ficha eliminados correctamente' });
+          });
+        } else {
+          res.json({ message: 'Alumno y observaciones eliminados correctamente' });
+        }
+      });
+    });
+  });
+});
+
+// --- RUTAS DE MÓDULOS ---
+
+// Obtener todos los módulos de un alumno
+app.get('/alumnos/:id/modulos', (req, res) => {
+  db.query('SELECT * FROM modulo WHERE id_alumno = ? ORDER BY fecha_creacion DESC', [req.params.id], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+});
+
+// Agregar un nuevo módulo
+app.post('/alumnos/:id/modulo', (req, res) => {
+  const { nombre, codigo, horas, calificacion, estado } = req.body;
+  const query = 'INSERT INTO modulo (id_alumno, nombre, codigo, horas, calificacion, estado) VALUES (?, ?, ?, ?, ?, ?)';
+  db.query(query, [req.params.id, nombre, codigo || null, horas || 0, calificacion || null, estado || 'Pendiente'], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.status(201).json({ message: "Módulo añadido", id: result.insertId });
+  });
+});
+
+// Actualizar un módulo
+app.put('/modulos/:id', (req, res) => {
+  const { nombre, codigo, horas, calificacion, estado } = req.body;
+  const query = 'UPDATE modulo SET nombre = ?, codigo = ?, horas = ?, calificacion = ?, estado = ? WHERE id = ?';
+  db.query(query, [nombre, codigo || null, horas || 0, calificacion || null, estado || 'Pendiente', req.params.id], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: "Módulo actualizado" });
+  });
+});
+
+// Eliminar un módulo
+app.delete('/modulos/:id', (req, res) => {
+  db.query('DELETE FROM modulo WHERE id = ?', [req.params.id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'No encontrado' });
+    res.json({ message: 'Módulo eliminado' });
+  });
+});
+
 // --- RUTA DE LOGIN ---
 
 app.post('/login', (req, res) => {
