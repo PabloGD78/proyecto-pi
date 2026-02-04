@@ -33,33 +33,30 @@ export class LoginComponent implements OnDestroy {
   }
 
   login(): void {
+    if (!this.correo || !this.contrasenia) {
+      this.errorMessage = 'Por favor, rellena todos los campos.';
+      return;
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
 
     this.loginSubscription = this.authService.login(this.correo, this.contrasenia).subscribe({
       next: (profesor) => {
-        // ✅ Actualiza la UI inmediatamente
         this.isLoading = false;
-        this.cd.detectChanges();
-
         if (profesor) {
+          // MODIFICADO: Cambiado 'alumnos' por 'home' para que coincida con tu app.routes.ts
           this.router.navigate(['/home']);
-        } else {
-          this.errorMessage = 'Usuario o contraseña incorrectos.';
         }
+        this.cd.detectChanges();
       },
       error: (err: any) => {
-        // ✅ Actualiza la UI inmediatamente
         this.isLoading = false;
+        // El servidor devuelve 401 si la contraseña de bcrypt no coincide o el correo no existe
+        this.errorMessage = err.status === 401 ? 
+          'Correo o contraseña incorrectos.' : 
+          'Error crítico de conexión con el servidor.';
         this.cd.detectChanges();
-
-        if (err.status === 401) {
-          this.errorMessage = 'Usuario o contraseña incorrectos.';
-        } else {
-          this.errorMessage = 'Error al conectar con el servidor. Inténtalo de nuevo.';
-        }
-
-        console.error('Error de login:', err);
       }
     });
   }

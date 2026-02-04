@@ -1,15 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router'; // <--- IMPORTANTE
+import { Router, RouterModule } from '@angular/router'; // Añadido RouterModule
 import { StudentService } from '../../services/student.service';
 import { NotificationService } from '../../services/notification.service';
+import { AuthService } from '../../services/auth.service'; // <--- IMPORTAR AUTHSERVICE
 import { Student } from '../../models/student'; 
 import { AddAlumnoComponent } from '../add-alumno/add-alumno.component';
 
 @Component({
   selector: 'app-alumnos-list',
   standalone: true,
-  imports: [CommonModule, AddAlumnoComponent],
+  imports: [CommonModule, AddAlumnoComponent, RouterModule], // Añadido RouterModule para navegación
   templateUrl: './alumnos-list.component.html',
   styleUrls: ['./alumnos-list.component.css']
 })
@@ -24,7 +25,8 @@ export class AlumnosListComponent implements OnInit {
   constructor(
     private studentService: StudentService,
     private notificationService: NotificationService,
-    private router: Router // <--- INYECTAR ROUTER
+    public authService: AuthService, // <--- INYECTAR COMO PUBLIC PARA EL HTML
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -33,12 +35,19 @@ export class AlumnosListComponent implements OnInit {
 
   cargarAlumnos(): void {
     this.studentService.getStudents().subscribe({
-      next: (data) => this.alumnos = data,
-      error: (err) => console.error('Error al cargar:', err)
+      next: (data) => {
+        this.alumnos = data;
+        console.log('Alumnos cargados:', data); // Útil para verificar si llega tutor_nombre
+      },
+      error: (err) => {
+        console.error('Error al cargar:', err);
+        if (err.status === 401) {
+          this.authService.logout(); // Si el token expira, fuera
+        }
+      }
     });
   }
 
-  // SOLUCIÓN ERROR 2: Esta función no existía
   verDetalle(id: number | undefined): void {
     if (id) {
       this.router.navigate(['/student', id]);
@@ -76,7 +85,6 @@ export class AlumnosListComponent implements OnInit {
     this.notificationType = type;
     this.showNotification = true;
     
-    // Auto-ocultar después de 4 segundos
     setTimeout(() => {
       this.showNotification = false;
     }, 4000);

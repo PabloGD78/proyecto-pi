@@ -1,5 +1,4 @@
 <div id="informe" class="detail-page" *ngIf="student; else loadingTemplate">
-  <!-- Notificación -->
   <div *ngIf="showNotification" class="notification" [ngClass]="notificationType">
     {{ notificationMessage }}
   </div>
@@ -25,36 +24,19 @@
 
   <div class="tabs-container">
     <div class="tabs-header">
-      <button class="tab-button" [class.active]="activeTab === 'datos'" (click)="selectTab('datos')">
-        Datos Básicos
-      </button>
-      <button class="tab-button" [class.active]="activeTab === 'ficha'" (click)="selectTab('ficha')">
-        Ficha Médica
-      </button>
-      <button class="tab-button" [class.active]="activeTab === 'observaciones'" (click)="selectTab('observaciones')">
-        Observaciones
-      </button>
-      <button class="tab-button" [class.active]="activeTab === 'modulos'" (click)="selectTab('modulos')">
-        Módulos
-      </button>
+      <button class="tab-button" [class.active]="activeTab === 'datos'" (click)="selectTab('datos')">Datos Básicos</button>
+      <button class="tab-button" [class.active]="activeTab === 'ficha'" (click)="selectTab('ficha')">Ficha Médica</button>
+      <button class="tab-button" [class.active]="activeTab === 'observaciones'" (click)="selectTab('observaciones')">Observaciones</button>
+      <button class="tab-button" [class.active]="activeTab === 'modulos'" (click)="selectTab('modulos')">Módulos</button>
     </div>
 
     <div class="tabs-content">
       <div *ngIf="activeTab === 'datos'" class="tab-pane">
         <h2>Datos Básicos</h2>
         <div class="form-section">
-          <div class="form-row">
-            <label>DNI</label>
-            <input type="text" [(ngModel)]="dni" />
-          </div>
-          <div class="form-row">
-            <label>Fecha de Nacimiento</label>
-            <input type="date" [(ngModel)]="fechaNacimiento" />
-          </div>
-          <div class="form-row">
-            <label>Contacto Tutor</label>
-            <input type="text" [(ngModel)]="contactoTutor" />
-          </div>
+          <div class="form-row"><label>DNI</label><input type="text" [(ngModel)]="dni" /></div>
+          <div class="form-row"><label>Fecha de Nacimiento</label><input type="date" [(ngModel)]="fechaNacimiento" /></div>
+          <div class="form-row"><label>Contacto Tutor</label><input type="text" [(ngModel)]="contactoTutor" /></div>
         </div>
         <button class="btn-save" (click)="saveChanges()">Guardar Datos</button>
       </div>
@@ -62,14 +44,8 @@
       <div *ngIf="activeTab === 'ficha'" class="tab-pane">
         <h2>Ficha Médica y Curricular</h2>
         <div class="form-section">
-          <div class="form-group">
-            <label>Datos Médicos</label>
-            <textarea [(ngModel)]="datosMedicos" rows="5" placeholder="Alergias, patologías..."></textarea>
-          </div>
-          <div class="form-group">
-            <label>Adaptaciones Curriculares</label>
-            <textarea [(ngModel)]="adaptacionesCurriculares" rows="5" placeholder="Detalles de apoyo..."></textarea>
-          </div>
+          <div class="form-group"><label>Datos Médicos</label><textarea [(ngModel)]="datosMedicos" rows="5" placeholder="Alergias, patologías..."></textarea></div>
+          <div class="form-group"><label>Adaptaciones Curriculares</label><textarea [(ngModel)]="adaptacionesCurriculares" rows="5" placeholder="Detalles de apoyo..."></textarea></div>
         </div>
         <button class="btn-save" (click)="saveChanges()">Actualizar Ficha</button>
       </div>
@@ -88,31 +64,21 @@
             <button class="btn-add" (click)="addObservation()">Añadir</button>
           </div>
         </div>
-
         <div class="observations-right">
           <h3>Historial</h3>
           <div class="table-scroll">
             <table>
               <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Tipo</th>
-                  <th>Contenido</th>
-                  <th>Acciones</th>
-                </tr>
+                <tr><th>Fecha</th><th>Tipo</th><th>Contenido</th><th>Acciones</th></tr>
               </thead>
               <tbody>
                 <tr *ngFor="let obs of observaciones">
                   <td>{{ obs.fecha | date:'dd/MM/yy' }}</td>
                   <td><span class="badge">{{ obs.tipo }}</span></td>
                   <td>{{ obs.contenido }}</td>
-                  <td>
-                    <button class="btn-delete" (click)="confirmDeleteObservation(obs.id)">Borrar</button>
-                  </td>
+                  <td><button class="btn-delete" (click)="confirmDeleteObservation(obs.id)">Borrar</button></td>
                 </tr>
-                <tr *ngIf="observaciones.length === 0">
-                  <td colspan="4">No hay observaciones registradas.</td>
-                </tr>
+                <tr *ngIf="observaciones.length === 0"><td colspan="4">No hay observaciones registradas.</td></tr>
               </tbody>
             </table>
           </div>
@@ -121,69 +87,33 @@
 
       <div *ngIf="activeTab === 'modulos'" class="tab-pane">
         <h2>Módulos y Asignaturas</h2>
-        
         <div class="modulos-container">
           <div class="modulos-left">
-            <h3>Añadir Nuevo Módulo</h3>
+            <h3>Añadir Módulo Extra</h3>
             <div class="form-section">
-              <div class="form-group">
-                <label>Nombre del Módulo *</label>
-                <input type="text" name="nombre" [(ngModel)]="nuevoModulo.nombre" placeholder="Ej: Matemáticas">
-              </div>
-              <div class="form-group">
-                <label>Código (Opcional)</label>
-                <input type="text" name="codigo" [(ngModel)]="nuevoModulo.codigo" placeholder="Ej: MAT001">
-              </div>
-              <div class="form-group">
-                <label>Horas</label>
-                <input type="number" name="horas" [(ngModel)]="nuevoModulo.horas" placeholder="0">
-              </div>
-              <div class="form-group">
-                <label>Calificación (Opcional)</label>
-                <input type="number" name="calificacion" [(ngModel)]="nuevoModulo.calificacion" placeholder="0-10" min="0" max="10" step="0.5">
-              </div>
-              <div class="form-group">
-                <label>Estado</label>
-                <select name="estado" [(ngModel)]="nuevoModulo.estado">
-                  <option value="Pendiente">Pendiente</option>
-                  <option value="En Progreso">En Progreso</option>
-                  <option value="Aprobado">Aprobado</option>
-                  <option value="Suspenso">Suspenso</option>
-                </select>
-              </div>
-              <button class="btn-add" (click)="addModulo()">Agregar Módulo</button>
+              <div class="form-group"><label>Nombre del Módulo *</label><input type="text" name="nombre" [(ngModel)]="nuevoModulo.nombre" placeholder="Ej: FOL"></div>
+              <div class="form-group"><label>Horas</label><input type="number" name="horas" [(ngModel)]="nuevoModulo.horas" placeholder="0"></div>
+              <button class="btn-add" (click)="addModulo()">Agregar Manualmente</button>
             </div>
           </div>
-
           <div class="modulos-right">
-            <h3>Módulos Registrados</h3>
+            <h3>Módulos del Ciclo</h3>
             <div class="table-scroll">
-              <table *ngIf="modulos.length > 0">
+              <table *ngIf="modulos && modulos.length > 0">
                 <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Código</th>
-                    <th>Horas</th>
-                    <th>Calificación</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
+                  <tr><th>Nombre del Módulo</th><th>Horas</th><th style="width: 100px;">Acciones</th></tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let mod of modulos">
-                    <td>{{ mod.nombre }}</td>
-                    <td>{{ mod.codigo || '-' }}</td>
-                    <td>{{ mod.horas }}</td>
-                    <td>{{ mod.calificacion ? mod.calificacion + '/10' : '-' }}</td>
-                    <td><span class="badge" [ngClass]="mod.estado.toLowerCase().replace(' ', '-')">{{ mod.estado }}</span></td>
-                    <td>
-                      <button class="btn-delete" (click)="deleteModulo(mod.id)">Eliminar</button>
-                    </td>
+                    <td><strong>{{ mod.nombre_modulo }}</strong></td>
+                    <td>{{ mod.horas }}h</td>
+                    <td><button class="btn-delete" (click)="deleteModulo(mod.id_modulo)">Eliminar</button></td>
                   </tr>
                 </tbody>
               </table>
-              <div *ngIf="modulos.length === 0" class="no-data">
-                No hay módulos registrados.
+              <div *ngIf="!modulos || modulos.length === 0" class="no-data">
+                <p>No hay módulos asignados a este alumno.</p>
+                <small>Asegúrese de que el alumno tiene un curso asignado.</small>
               </div>
             </div>
           </div>
@@ -197,8 +127,6 @@
   <div class="loader-container">
     <div class="spinner"></div>
     <p>Cargando información del alumno...</p>
-    <div class="loader-actions">
-      <button class="btn-back" (click)="goBack()">Volver al Listado</button>
-    </div>
+    <div class="loader-actions"><button class="btn-back" (click)="goBack()">Volver al Listado</button></div>
   </div>
 </ng-template>

@@ -20,7 +20,7 @@ import { NotificationService } from '../../services/notification.service';
     .title { color: #2c3e50; margin-bottom: 20px; font-weight: 600; text-align: center; }
     .input-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 5px; color: #666; font-size: 0.9rem; }
-    input { 
+    input, select { 
       width: 100%; 
       padding: 12px; 
       border: 1px solid #dcdde1; 
@@ -28,7 +28,7 @@ import { NotificationService } from '../../services/notification.service';
       box-sizing: border-box;
       transition: border-color 0.3s;
     }
-    input:focus { border-color: #3498db; outline: none; }
+    input:focus, select:focus { border-color: #3498db; outline: none; }
     .btn-save { 
       width: 100%; 
       padding: 14px; 
@@ -50,39 +50,14 @@ import { NotificationService } from '../../services/notification.service';
       font-weight: 500;
       animation: slideDown 0.3s ease-out;
     }
-    .notification.success {
-      background-color: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-    .notification.error {
-      background-color: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-    .notification.info {
-      background-color: #d1ecf1;
-      color: #0c5460;
-      border: 1px solid #bee5eb;
-    }
-    .notification.warning {
-      background-color: #fff3cd;
-      color: #856404;
-      border: 1px solid #ffeeba;
-    }
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+    .notification.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .notification.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .notification.info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    .notification.warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
   `]
 })
-export class AddAlumnoComponent {
+export class AddAlumnoComponent implements OnInit {
   @Output() guardado = new EventEmitter<void>();
 
   nuevoAlumno = {
@@ -91,8 +66,10 @@ export class AddAlumnoComponent {
     dni: '',
     fecha_nacimiento: '',
     contacto_tutor: '',
-    curso_nombre: ''
+    id_curso: null // Modificado para recibir el ID del desplegable
   };
+
+  cursos: any[] = []; // Variable para guardar los cursos de la BD
 
   notificationMessage: string = '';
   notificationType: 'success' | 'error' | 'info' | 'warning' = 'info';
@@ -103,16 +80,27 @@ export class AddAlumnoComponent {
     private notificationService: NotificationService
   ) {}
 
+  ngOnInit(): void {
+    this.cargarCursos();
+  }
+
+  cargarCursos() {
+    this.studentService.getCourses().subscribe({
+      next: (data) => this.cursos = data,
+      error: (err) => console.error('Error al obtener cursos:', err)
+    });
+  }
+
   registrar() {
     this.studentService.crearAlumno(this.nuevoAlumno).subscribe({
       next: (res: any) => {
-        this.showNotificationMessage('✅ Alumno registrado y ficha vinculada con éxito', 'success');
+        this.showNotificationMessage('✅ Alumno registrado con éxito', 'success');
         this.resetForm();
-        this.guardado.emit(); // Cierra el formulario y refresca la tabla
+        this.guardado.emit(); 
       },
       error: (err: any) => {
         console.error('Error al registrar:', err);
-        this.showNotificationMessage('❌ Error al guardar. Revisa que el servidor esté encendido.', 'error');
+        this.showNotificationMessage('❌ Error al guardar.', 'error');
       }
     });
   }
@@ -120,7 +108,7 @@ export class AddAlumnoComponent {
   resetForm() {
     this.nuevoAlumno = {
       nombre: '', apellidos: '', dni: '', 
-      fecha_nacimiento: '', contacto_tutor: '', curso_nombre: '' 
+      fecha_nacimiento: '', contacto_tutor: '', id_curso: null 
     };
   }
 
@@ -128,10 +116,6 @@ export class AddAlumnoComponent {
     this.notificationMessage = message;
     this.notificationType = type;
     this.showNotification = true;
-    
-    // Auto-ocultar después de 4 segundos
-    setTimeout(() => {
-      this.showNotification = false;
-    }, 4000);
+    setTimeout(() => this.showNotification = false, 4000);
   }
 }

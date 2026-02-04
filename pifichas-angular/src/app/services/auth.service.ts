@@ -14,11 +14,13 @@ export class AuthService {
   login(correo: string, contrasenia: string): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/login`, { correo, contrasenia }).pipe(
       map(res => {
-        if (res && res.profesor) {
+        if (res && res.token) {
+          localStorage.setItem('token', res.token);
+          // IMPORTANTE: Ahora res.profesor ya incluye el ROL gracias al nuevo indexpi.js
           localStorage.setItem('user', JSON.stringify(res.profesor));
           return res.profesor;
         } else {
-          throw new Error('Usuario o contraseña incorrectos');
+          throw new Error('Error en la respuesta del servidor');
         }
       }),
       catchError(err => throwError(() => err))
@@ -27,14 +29,22 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  }
+
+  isAuthenticated(): boolean {
+    return !!localStorage.getItem('token');
+  }
+
+  // NUEVO: Método para saber si es admin
+  isAdmin(): boolean {
+    const user = this.getCurrentUser();
+    return user && user.rol === 'admin';
   }
 
   getCurrentUser(): any {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.getCurrentUser();
   }
 }

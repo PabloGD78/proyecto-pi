@@ -1,12 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // Añadido ChangeDetectorRef
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
 import { StudentService } from '../../services/student.service';
 import { NotificationService } from '../../services/notification.service';
-import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-student-detail',
@@ -20,6 +20,7 @@ export class StudentDetailComponent implements OnInit {
   studentId: number | null = null;
   activeTab = 'datos';
   
+  // Campos de la ficha
   dni: string = '';
   fechaNacimiento: string = '';
   contactoTutor: string = '';
@@ -27,11 +28,13 @@ export class StudentDetailComponent implements OnInit {
   adaptacionesCurriculares: string = '';
   id_ficha: number | null = null;
   
+  // Observaciones
   nuevaObservacion: string = '';
   tipoObservacion: string = 'General';
   visibleAlTutor: boolean = false;
   observaciones: any[] = [];
 
+  // Módulos (Aquí se cargarán los que insertamos por SQL)
   modulos: any[] = [];
   nuevoModulo = {
     nombre: '',
@@ -41,6 +44,7 @@ export class StudentDetailComponent implements OnInit {
     estado: 'Pendiente'
   };
 
+  // Notificaciones
   notificationMessage: string = '';
   notificationType: 'success' | 'error' | 'info' | 'warning' = 'info';
   showNotification: boolean = false;
@@ -50,7 +54,7 @@ export class StudentDetailComponent implements OnInit {
     private router: Router,
     private studentService: StudentService,
     private notificationService: NotificationService,
-    private cdr: ChangeDetectorRef // Inyectamos esto para forzar el refresco visual
+    private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit(): void {
@@ -59,19 +63,22 @@ export class StudentDetailComponent implements OnInit {
       this.studentId = +idParam;
       this.loadStudentData(this.studentId);
       this.loadObservations(this.studentId);
-      this.loadModulos(this.studentId);
     }
   }
 
   loadStudentData(id: number): void {
-    console.log('Solicitando datos para ID:', id);
     this.studentService.getStudentById(id).subscribe({
       next: (data: any) => {
-        // --- PASO CRÍTICO ---
-        // Asignamos el objeto student inmediatamente para que desaparezca el "Cargando"
         this.student = data;
         
-        // Usamos un try-catch para que si la fecha falla, no se bloquee el componente
+        // --- LÓGICA DE MÓDULOS AUTOMÁTICOS ---
+        // Si el alumno tiene curso (ej: ID 9), cargamos los módulos que insertamos por SQL
+        if (this.student.id_curso) {
+          this.loadModulosDelCurso(this.student.id_curso);
+        } else {
+          this.loadModulos(id); // Fallback a módulos individuales
+        }
+
         try {
           this.dni = data.dni || '';
           this.contactoTutor = data.contacto_tutor || '';
@@ -81,7 +88,6 @@ export class StudentDetailComponent implements OnInit {
 
           if (data.fecha_nacimiento) {
             const dateObj = new Date(data.fecha_nacimiento);
-            // Verificamos que la fecha sea válida antes de convertirla
             if (!isNaN(dateObj.getTime())) {
               this.fechaNacimiento = dateObj.toISOString().split('T')[0];
             }
@@ -90,23 +96,20 @@ export class StudentDetailComponent implements OnInit {
           console.error("Error procesando campos secundarios:", e);
         }
 
-        // Forzamos a Angular a que detecte los cambios (solución al error NG0505)
         this.cdr.detectChanges();
-        console.log('Frontend actualizado con éxito:', this.student);
       },
-      error: (err) => {
-        console.error('Error en la recepción de datos:', err);
-      }
+      error: (err) => console.error('Error al cargar datos del alumno:', err)
     });
   }
 
-  loadObservations(id: number): void {
-    this.studentService.getObservations(id).subscribe({
+  // Carga los módulos base del ciclo (DAM, DAW, Infantil...)
+  loadModulosDelCurso(idCurso: number): void {
+    this.studentService.getModulosPorCurso(idCurso).subscribe({
       next: (data) => {
-        this.observaciones = data;
+        this.modulos = data;
         this.cdr.detectChanges();
       },
-      error: (err) => console.warn('Sin observaciones')
+      error: (err) => console.warn('No se pudieron cargar los módulos del curso')
     });
   }
 
@@ -120,12 +123,21 @@ export class StudentDetailComponent implements OnInit {
     });
   }
 
+  loadObservations(id: number): void {
+    this.studentService.getObservations(id).subscribe({
+      next: (data) => {
+        this.observaciones = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.warn('Sin observaciones')
+    });
+  }
+
   selectTab(tab: string): void {
     this.activeTab = tab;
   }
 
   goBack(): void {
-    // Navegar a la lista de alumnos (ruta interna 'home')
     this.router.navigate(['/home']);
   }
 
@@ -147,7 +159,7 @@ export class StudentDetailComponent implements OnInit {
         if (response.id_ficha) this.id_ficha = response.id_ficha;
         this.loadStudentData(this.studentId!);
       },
-      error: (err) => this.showNotificationMessage('Error al guardar.', 'error')
+      error: () => this.showNotificationMessage('Error al guardar.', 'error')
     });
   }
 
@@ -171,16 +183,11 @@ export class StudentDetailComponent implements OnInit {
 
   confirmDeleteObservation(obsId: number): void {
     if (!confirm('¿Estás seguro de que deseas borrar esta observación?')) return;
-    this.deleteObservation(obsId);
-  }
-
-  deleteObservation(obsId: number): void {
     this.studentService.deleteObservation(obsId).subscribe({
       next: () => {
         if (this.studentId) this.loadObservations(this.studentId);
         this.showNotificationMessage('Observación eliminada.', 'success');
-      },
-      error: () => this.showNotificationMessage('Error al eliminar la observación.', 'error')
+      }
     });
   }
 
@@ -191,126 +198,60 @@ export class StudentDetailComponent implements OnInit {
     return 'AL';
   }
 
-  // Función para el botón de PDF — genera y descarga un PDF en vez de abrir la impresión
   async generarPDF(): Promise<void> {
     if (!this.student) return;
-
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const margin = 15;
     let y = 20;
 
-    // Encabezado
     pdf.setFontSize(18);
     pdf.text('Informe del Alumno', pageWidth / 2, y, { align: 'center' });
-    y += 8;
-
-    pdf.setFontSize(12);
-    pdf.text(`${this.student.nombre || ''} ${this.student.apellidos || ''}`, margin, y);
-    pdf.text(`ID: ${this.student.id || ''}`, pageWidth - margin, y, { align: 'right' });
-    y += 8;
-
-    // Añadir nombre del curso en el encabezado
-    pdf.setFontSize(11);
-    const courseText = (this.student.curso_nombre || this.student.grupo || 'Sin curso');
-    pdf.text(`Curso: ${courseText}`, margin, y);
-    y += 8;
-
-    pdf.setFontSize(10);
-    pdf.text(`DNI: ${this.dni || this.student.dni || ''}`, margin, y);
-    pdf.text(`Fecha de Nacimiento: ${this.fechaNacimiento || ''}`, pageWidth - margin, y, { align: 'right' });
-    y += 6;
-    pdf.text(`Contacto Tutor: ${this.contactoTutor || ''}`, margin, y);
     y += 10;
 
-    // Ficha Médica
     pdf.setFontSize(12);
-    pdf.text('Ficha Médica', margin, y);
-    y += 6;
-    pdf.setFontSize(10);
-    const datosMedicosLines = pdf.splitTextToSize(this.datosMedicos || '', pageWidth - margin * 2);
-    pdf.text(datosMedicosLines, margin, y);
-    y += datosMedicosLines.length * 6 + 6;
+    pdf.text(`Alumno: ${this.student.nombre} ${this.student.apellidos}`, margin, y);
+    y += 7;
+    pdf.text(`Curso: ${this.student.curso_nombre || 'No asignado'}`, margin, y);
+    y += 15;
 
-    // Adaptaciones Curriculares
-    pdf.setFontSize(12);
-    pdf.text('Adaptaciones Curriculares', margin, y);
-    y += 6;
-    pdf.setFontSize(10);
-    const adaptLines = pdf.splitTextToSize(this.adaptacionesCurriculares || '', pageWidth - margin * 2);
-    pdf.text(adaptLines, margin, y);
-    y += adaptLines.length * 6 + 8;
-
-    // Observaciones (tabla)
-    const obsHead = [['Fecha', 'Tipo', 'Contenido']];
-    const obsBody = (this.observaciones || []).map(o => [
-      o.fecha ? new Date(o.fecha).toLocaleDateString('es-ES') : '',
-      o.tipo || '',
-      (o.contenido || '').replace(/\s+/g, ' ').trim()
-    ]);
-
-    // Título para la sección de observaciones en el PDF
-    pdf.setFontSize(12);
-    pdf.text('Observaciones', margin, y);
-    y += 6; // espacio después del título
-
+    // Tabla de Módulos
+    pdf.text('Módulos Académicos', margin, y);
     autoTable(pdf as any, {
-      startY: y,
-      head: obsHead,
-      body: obsBody,
-      styles: { fontSize: 10, cellPadding: 3 },
-      headStyles: { fillColor: [26, 115, 232] },
-      columnStyles: { 0: { cellWidth: 30 }, 1: { cellWidth: 30 }, 2: { cellWidth: pageWidth - margin * 2 - 60 } }
+      startY: y + 5,
+      head: [['Módulo', 'Horas']],
+      body: this.modulos.map(m => [m.nombre_modulo, m.horas + 'h']),
+      headStyles: { fillColor: [26, 115, 232] }
     });
 
-    const safeName = `informe-${(this.student.nombre || 'alumno').replace(/\s+/g, '_')}-${this.student.id || 'id'}.pdf`;
-    pdf.save(safeName);
+    pdf.save(`informe_${this.student.nombre}.pdf`);
   }
 
   showNotificationMessage(message: string, type: 'success' | 'error' | 'info' | 'warning'): void {
     this.notificationMessage = message;
     this.notificationType = type;
     this.showNotification = true;
-    
-    // Auto-ocultar después de 4 segundos
-    setTimeout(() => {
-      this.showNotification = false;
-    }, 4000);
+    setTimeout(() => this.showNotification = false, 4000);
   }
 
+  // Mantengo tus funciones de gestión manual por si quieres añadir extras
   addModulo(): void {
-    if (!this.nuevoModulo.nombre.trim() || !this.studentId) {
-      console.warn('Validación fallida: nombre o studentId vacío');
-      return;
-    }
-
-    console.log('Agregando módulo:', this.nuevoModulo, 'Para alumno:', this.studentId);
-
+    if (!this.nuevoModulo.nombre.trim() || !this.studentId) return;
     this.studentService.addModulo(this.studentId, this.nuevoModulo).subscribe({
-      next: (response) => {
-        console.log('Módulo agregado exitosamente:', response);
-        this.loadModulos(this.studentId!);
+      next: () => {
+        this.loadStudentData(this.studentId!);
         this.nuevoModulo = { nombre: '', codigo: '', horas: 0, calificacion: null, estado: 'Pendiente' };
-        this.showNotificationMessage('✅ Módulo añadido correctamente', 'success');
-      },
-      error: (err) => {
-        console.error('Error al agregar módulo:', err);
-        this.showNotificationMessage('❌ Error al agregar el módulo', 'error');
+        this.showNotificationMessage('Módulo añadido', 'success');
       }
     });
   }
 
   deleteModulo(moduloId: number): void {
-    if (!confirm('¿Estás seguro de que deseas eliminar este módulo?')) return;
-    
+    if (!confirm('¿Eliminar módulo?')) return;
     this.studentService.deleteModulo(moduloId).subscribe({
       next: () => {
-        if (this.studentId) this.loadModulos(this.studentId);
-        this.showNotificationMessage('✅ Módulo eliminado correctamente', 'success');
-      },
-      error: (err) => {
-        console.error('Error al eliminar módulo:', err);
-        this.showNotificationMessage('❌ Error al eliminar el módulo', 'error');
+        this.loadStudentData(this.studentId!);
+        this.showNotificationMessage('Módulo eliminado', 'success');
       }
     });
   }

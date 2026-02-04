@@ -1,0 +1,140 @@
+.home-page {
+  padding: 40px;
+  background-color: #fff;
+  min-height: 100vh;
+}
+
+.page-header {
+  margin-bottom: 30px;
+}
+
+.page-header h1 {
+  font-size: 40px;
+  font-weight: bold;
+  color: #333;
+}
+
+.header-btns {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+/* Botones */
+.btn-add-profe {
+  padding: 12px 20px;
+  border-radius: 8px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-report {
+  padding: 12px 20px;
+  border-radius: 8px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+/* Tabla */
+.table-container {
+  width: 100%;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.students-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-header {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #eee;
+}
+
+.table-header th {
+  padding: 20px;
+  text-align: left;
+  font-weight: bold;
+  color: #444;
+}
+
+.table-row {
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s;
+}
+
+.table-row:hover {
+  background-color: #fcfcfc;
+}
+
+.table-row td {
+  padding: 18px 20px;
+  color: #555;
+  vertical-align: middle;
+}
+
+/* Badge */
+.badge-alumnos {
+  background-color: #e3f2fd;
+  color: #007bff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+/* Formulario */
+.form-container {
+  background: #f8f9fa;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  border: 1px solid #ddd;
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 400px;
+}
+
+.input-field {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.btn-save {
+  background-color: #007bff;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-delete {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 8px 15px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.no-results {
+  padding: 50px;
+  text-align: center;
+  color: #888;
+}

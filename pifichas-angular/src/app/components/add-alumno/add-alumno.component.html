@@ -1,7 +1,6 @@
 <div class="form-container">
   <h2 class="title">Registro de Nuevo Estudiante</h2>
   
-  <!-- Notificación -->
   <div *ngIf="showNotification" class="notification" [ngClass]="notificationType">
     {{ notificationMessage }}
   </div>
@@ -33,8 +32,13 @@
     </div>
 
     <div class="input-group">
-      <label>Curso (Opcional)</label>
-      <input type="text" [(ngModel)]="nuevoAlumno.curso_nombre" name="curso_nombre" placeholder="Nombre del curso (opcional)">
+      <label>Seleccionar Curso</label>
+      <select [(ngModel)]="nuevoAlumno.id_curso" name="id_curso" required>
+        <option [value]="null" disabled selected>-- Elige un curso --</option>
+        <option *ngFor="let c of cursos" [value]="c.id">
+          {{ c.anio }}º{{ c.nombre }}
+        </option>
+      </select>
     </div>
 
     <button type="submit" class="btn-save" [disabled]="!alumnoForm.valid">

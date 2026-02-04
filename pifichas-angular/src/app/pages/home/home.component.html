@@ -1,12 +1,18 @@
 <div class="home-page">
   <div class="page-header">
     <h1>Gestión de Alumnos</h1>
-    <button class="btn-report" (click)="mostrarFormulario = !mostrarFormulario" style="background-color: #007bff; color: white; margin-top: 10px;">
-      {{ mostrarFormulario ? 'Ver Lista' : '+ Añadir Alumno' }}
-    </button>
+    
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <button *ngIf="authService.isAdmin()" class="btn-report" routerLink="/profesores" style="background-color: #6f42c1; color: white; margin-top: 10px;">
+        👥 Gestionar Equipo
+      </button>
+
+      <button class="btn-report" (click)="mostrarFormulario = !mostrarFormulario" style="background-color: #007bff; color: white; margin-top: 10px;">
+        {{ mostrarFormulario ? 'Ver Lista' : '+ Añadir Alumno' }}
+      </button>
+    </div>
   </div>
 
-  <!-- Notificación -->
   <div *ngIf="showNotification" class="notification" [ngClass]="notificationType">
     {{ notificationMessage }}
   </div>
@@ -37,6 +43,7 @@
             <th>Nombre</th>
             <th>Apellidos</th>
             <th>DNI</th>
+            <th *ngIf="authService.isAdmin()">Profesor</th>
             <th>Curso</th>
             <th>Contacto Tutor</th>
             <th class="action-cell">Acciones</th>
@@ -48,6 +55,9 @@
             <td>{{ student.nombre }}</td>
             <td>{{ student.apellidos }}</td>
             <td>{{ student.dni }}</td>
+            <td *ngIf="authService.isAdmin()" style="font-weight: bold; color: #6f42c1;">
+              {{ student.tutor_nombre || 'Sin asignar' }}
+            </td>
             <td>{{ student.curso_nombre || (student.grupo || 'Sin curso') }}</td>
             <td>{{ student.contacto_tutor }}</td>
             <td class="action-cell">

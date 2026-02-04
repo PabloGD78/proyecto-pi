@@ -9,6 +9,9 @@ export interface Student {
   id_curso?: number;
   grupo?: string;
   ultima_modificacion?: string;
+  // --- CAMPOS NUEVOS PARA LA VISTA ADMIN Y JOINS ---
+  tutor_nombre?: string; // <--- Añade esto
+  curso_nombre?: string; // <--- Añade esto
   // Campos extra que vienen de la ficha en el detalle
   alergias?: string;
   medicacion?: string;

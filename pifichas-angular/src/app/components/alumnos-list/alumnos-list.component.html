@@ -1,12 +1,18 @@
 <div class="container">
   <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
-    <h1>Gestión de Alumnos</h1>
-    <button (click)="mostrarFormulario = !mostrarFormulario" class="btn-add">
-      {{ mostrarFormulario ? '← Volver' : '+ Añadir Alumno' }}
-    </button>
+    <h1>Gestión de Alumnos {{ authService.isAdmin() ? '(Vista Global Admin)' : '' }}</h1>
+    
+    <div class="buttons-gap">
+      <button *ngIf="authService.isAdmin()" class="btn-admin" routerLink="/admin/profesores">
+        ⚙️ Gestionar Profesores
+      </button>
+
+      <button (click)="mostrarFormulario = !mostrarFormulario" class="btn-add">
+        {{ mostrarFormulario ? '← Volver' : '+ Añadir Alumno' }}
+      </button>
+    </div>
   </div>
 
-  <!-- Notificación -->
   <div *ngIf="showNotification" class="notification" [ngClass]="notificationType">
     {{ notificationMessage }}
   </div>
@@ -23,6 +29,7 @@
         <tr>
           <th>ID</th>
           <th>Nombre Completo</th>
+          <th *ngIf="authService.isAdmin()">Profesor Tutor</th>
           <th>Grupo</th>
           <th>Modificación</th>
           <th>Acciones</th>
@@ -33,7 +40,10 @@
           <tr>
             <td>{{ alumno.id }}</td>
             <td>{{ alumno.nombre }} {{ alumno.apellidos }}</td>
-            <td>{{ alumno.grupo || 'N/A' }}</td>
+            <td *ngIf="authService.isAdmin()">
+              <span class="badge-profe">{{ alumno.tutor_nombre || 'Sin asignar' }}</span>
+            </td>
+            <td>{{ alumno.curso_nombre || 'N/A' }}</td>
             <td>{{ alumno.ultima_modificacion | date:'shortDate' }}</td>
             <td>
               <button class="btn-view" (click)="verDetalle(alumno.id)">Ver Ficha</button>
@@ -42,7 +52,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="5" style="text-align: center;">No hay alumnos registrados.</td>
+            <td [attr.colspan]="authService.isAdmin() ? 6 : 5" style="text-align: center;">No hay alumnos registrados.</td>
           </tr>
         }
       </tbody>
