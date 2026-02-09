@@ -1,27 +1,32 @@
-/* Contenedor Principal - Tema claro */
+
+:host {
+  display: block;
+  background-color: #F2EEF0 !important;
+  min-height: 100vh; 
+  margin: 0;
+  padding: 0;
+}
+
 .detail-page {
-  max-width: 1200px;
-  margin: 20px auto;
-  padding: 20px;
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  color: #222; /* Texto oscuro */
-  background-color: #ffffff; /* Fondo blanco */
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  background-color: #F2EEF0 !important;
+  margin: 0 auto;
+  padding: 40px;
+  min-height: 100vh;
 }
 
 /* Cabecera */
 .detail-header {
-  position: relative; /* para centrar absolutamente el título */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #ffffff; /* Fondo claro */
-  padding: 25px 28px; /* mantener algo de padding horizontal */
+  background: #ffffff;
+  padding: 25px 28px;
   border-radius: 12px;
   margin-bottom: 25px;
-  border-left: 6px solid #e6eefc; /* Accent (más claro) */
+ 
+  border: 1px solid #e0e0e0; 
   color: #222;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .header-left {
@@ -83,7 +88,7 @@
 }
 
 .btn-report {
-  background-color: #0d47a1; /* Azul Cobalto */
+  background-color: #1a73e8;
   color: white;
   border: none;
   padding: 10px 18px;
@@ -217,14 +222,28 @@ input:focus, textarea:focus {
 }
 
 .btn-add {
-  background: #455a64;
+  background-color: #007bff; 
   color: white;
   border: none;
-  padding: 0 20px;
+  padding: 10px 20px; 
   border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
+  transition: all 0.2s ease;
+  
+  /* Aseguramos que no ocupe todo el ancho si no es necesario */
+  display: inline-block;
+  width: auto;
+  
+  /* Sombra suave para consistencia */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+.btn-add:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
 /* Botón de eliminar observación */
 .btn-delete {
   background: #c62828;
@@ -446,7 +465,7 @@ body.generating-pdf .obs-controls {
 
 .badge.en-progreso {
   background-color: #cfe2ff;
-  color: #084298;
+  color: #1a73e8;
 }
 
 .badge.aprobado {
@@ -457,4 +476,40 @@ body.generating-pdf .obs-controls {
 .badge.suspenso {
   background-color: #f8d7da;
   color: #842029;
+}
+
+/* Botón de acción base */
+.btn-action {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-delete-minimal {
+  background-color: transparent;
+  color: #d93025; /* Rojo suave */
+  border: none;
+}
+
+.btn-delete-minimal:hover {
+  background-color: #fef1f0; /* Fondo rojizo muy sutil al pasar el ratón */
+  border-color: #fad2cf;
+}
+
+.close-icon {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* Ajuste para la celda de la tabla */
+td button.btn-delete-minimal {
+  margin: 0 auto; /* Centra el botón si la celda es ancha */
 }

@@ -2,7 +2,7 @@
 export const APP_CONSTANTS = {
   // Colores
   colors: {
-    primary: '#2196F3',
+    primary: '#009ACD',
     primaryDark: '#1976D2',
     secondary: '#424242',
     lightGray: '#f5f5f5',

@@ -1,23 +1,14 @@
 <div class="home-page">
-  <div class="page-header">
-    <h1>Gestión de Alumnos</h1>
-    
-    <div style="display: flex; gap: 10px; align-items: center;">
-      <button *ngIf="authService.isAdmin()" class="btn-report" routerLink="/profesores" style="background-color: #6f42c1; color: white; margin-top: 10px;">
-        👥 Gestionar Equipo
-      </button>
-
-      <button class="btn-report" (click)="mostrarFormulario = !mostrarFormulario" style="background-color: #007bff; color: white; margin-top: 10px;">
-        {{ mostrarFormulario ? 'Ver Lista' : '+ Añadir Alumno' }}
-      </button>
-    </div>
-  </div>
-
   <div *ngIf="showNotification" class="notification" [ngClass]="notificationType">
     {{ notificationMessage }}
   </div>
 
   <div *ngIf="mostrarFormulario">
+    <div class="page-header">
+      <button class="btn-header-blue" (click)="mostrarFormulario = false">
+        ← Volver a la Lista
+      </button>
+    </div>
     <app-add-alumno (guardado)="onAlumnoGuardado()"></app-add-alumno>
   </div>
 
@@ -29,10 +20,17 @@
       <div class="filter-field">
         <input type="text" class="input-field" [(ngModel)]="filterQuery" (input)="onFilterChange()" placeholder="Filtrar por Clase/Grupo">
       </div>
-    </div>
 
-    <div *ngIf="loading && filteredStudents.length === 0" class="no-results">
-      <p>Cargando datos del servidor...</p>
+      <div class="spacer"></div>
+
+      <div class="header-actions">
+        <button *ngIf="authService.isAdmin()" class="btn-header-purple" routerLink="/profesores">
+          Gestionar Equipo
+        </button>
+        <button class="btn-header-blue" (click)="mostrarFormulario = true">
+          + Añadir Alumno
+        </button>
+      </div>
     </div>
 
     <div class="table-container" *ngIf="filteredStudents.length > 0">
@@ -55,14 +53,18 @@
             <td>{{ student.nombre }}</td>
             <td>{{ student.apellidos }}</td>
             <td>{{ student.dni }}</td>
-            <td *ngIf="authService.isAdmin()" style="font-weight: bold; color: #6f42c1;">
+            <td *ngIf="authService.isAdmin()" class="tutor-cell">
               {{ student.tutor_nombre || 'Sin asignar' }}
             </td>
             <td>{{ student.curso_nombre || (student.grupo || 'Sin curso') }}</td>
             <td>{{ student.contacto_tutor }}</td>
             <td class="action-cell">
-              <button class="btn-report" (click)="goToDetail(student.id)">📋 Informe</button>
-              <button class="btn-delete" (click)="confirmDeleteStudent(student.id, student.nombre, student.apellidos)">🗑️ Eliminar</button>
+              <button class="btn-action btn-report-outline" (click)="goToDetail(student.id)">
+                Informe
+              </button>
+              <button class="btn-action btn-delete-minimal" (click)="confirmDeleteStudent(student.id, student.nombre, student.apellidos)">
+                <span class="close-icon">×</span> Eliminar
+              </button>
             </td>
           </tr>
         </tbody>

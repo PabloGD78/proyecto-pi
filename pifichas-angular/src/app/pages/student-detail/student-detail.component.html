@@ -107,7 +107,9 @@
                   <tr *ngFor="let mod of modulos">
                     <td><strong>{{ mod.nombre_modulo }}</strong></td>
                     <td>{{ mod.horas }}h</td>
-                    <td><button class="btn-delete" (click)="deleteModulo(mod.id_modulo)">Eliminar</button></td>
+                    <td><button class="btn-action btn-delete-minimal" (click)="deleteModulo(mod.id_modulo)">
+    <span class="close-icon">×</span> Eliminar
+  </button></td>
                   </tr>
                 </tbody>
               </table>

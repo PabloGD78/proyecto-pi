@@ -2,7 +2,7 @@
   background-color: white;
   border-bottom: 1px solid #e0e0e0;
   padding: 0 20px;
-  height: 60px;
+  height: 90px;
   display: flex;
   align-items: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -24,7 +24,7 @@
 }
 
 .platform-logo {
-  height: 50px;
+  height: 140px;
   width: auto;
   max-width: 200px;
   object-fit: contain;
@@ -36,24 +36,24 @@
 }
 
 .nav-button {
-  position: relative;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: #333;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.3s ease;
-  height: 60px;
-  outline: none;
+  /* ... resto de propiedades ... */
+  font-size: 60px; /* Aumentamos el tamaño base (estaba en 18px) */
+  font-weight: 700; /* Esto lo pone en negrita (bold) */
+  text-transform: none; /* Asegura que respete tus mayúsculas/minúsculas */
+  background: none;      /* Quita cualquier color de fondo */
+  border: none;          /* Quita el borde sólido */
+  outline: none;         /* Quita el borde de enfoque (azul/negro) */
+  box-shadow: none;      /* Quita sombras que puedan parecer bordes */
+  cursor: pointer;       /* Asegura que salga la mano al pasar el ratón */
+  padding: 0 15px;       /* Un poco de espacio a los lados para que respire */
 }
 
 .button-text {
   display: block;
+  /* Si quieres que sea todavía más específico, puedes añadirlo aquí */
+  font-size: 27px; 
+  font-weight: bold;
+  letter-spacing: 0.5px; /* Un poco de espacio entre letras le da un toque profesional */
 }
 
 .nav-button:hover {
@@ -61,7 +61,7 @@
 }
 
 .nav-button.active .button-text {
-  color: #2196F3;
+  color: #000000;
   font-weight: bold;
 }
 
