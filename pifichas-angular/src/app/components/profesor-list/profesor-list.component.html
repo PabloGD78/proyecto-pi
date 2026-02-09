@@ -9,6 +9,16 @@
     </div>
   </div>
 
+  <!-- Modal Confirmación -->
+  <app-confirm-dialog
+    [isOpen]="showConfirmDialog"
+    [title]="confirmDialogTitle"
+    [message]="confirmDialogMessage"
+    [confirmText]="'Eliminar'"
+    (confirmed)="onDialogConfirmed()"
+    (cancelled)="onDialogCancelled()">
+  </app-confirm-dialog>
+
   <div *ngIf="mostrarFormulario" class="form-container">
     <h2>Registrar Nuevo Profesor</h2>
     <div class="form-grid">

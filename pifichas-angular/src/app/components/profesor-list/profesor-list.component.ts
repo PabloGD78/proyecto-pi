@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms'; 
 import { RouterModule } from '@angular/router';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-profesor-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, ConfirmDialogComponent],
   templateUrl: './profesor-list.component.html',
   styleUrls: ['./profesor-list.component.css']
 })
@@ -16,6 +17,11 @@ export class ProfesorListComponent implements OnInit {
   mostrarFormulario = false;
   cargando = true; 
   nuevoProfe = { nombre: '', email: '', contrasenia: '' };
+  // Confirm dialog state
+  showConfirmDialog: boolean = false;
+  confirmDialogTitle: string = '';
+  confirmDialogMessage: string = '';
+  profesorIdToDelete: number | null = null;
 
   constructor(
     private http: HttpClient, 
@@ -89,10 +95,34 @@ export class ProfesorListComponent implements OnInit {
   }
 
   eliminarProfe(id: number, nombre: string) {
-    if (confirm(`¿Seguro que quieres eliminar al profesor ${nombre}?`)) {
-      const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
-      this.http.delete(`http://localhost:3000/admin/profesores/${id}`, { headers })
-        .subscribe(() => this.cargarProfesores());
-    }
+    if (!id) return;
+    this.profesorIdToDelete = id;
+    this.confirmDialogTitle = 'Eliminar profesor';
+    this.confirmDialogMessage = `¿Seguro que quieres eliminar al profesor ${nombre}? Esta acción no se puede deshacer.`;
+    this.showConfirmDialog = true;
+  }
+
+  onDialogConfirmed(): void {
+    if (this.profesorIdToDelete === null) return;
+    const id = this.profesorIdToDelete;
+    const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    this.http.delete(`http://localhost:3000/admin/profesores/${id}`, { headers })
+      .subscribe({
+        next: () => {
+          this.cargarProfesores();
+          this.showConfirmDialog = false;
+          this.profesorIdToDelete = null;
+        },
+        error: (err) => {
+          console.error('Error eliminando profesor', err);
+          this.showConfirmDialog = false;
+          this.profesorIdToDelete = null;
+        }
+      });
+  }
+
+  onDialogCancelled(): void {
+    this.showConfirmDialog = false;
+    this.profesorIdToDelete = null;
   }
 }

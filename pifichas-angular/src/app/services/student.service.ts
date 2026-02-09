@@ -71,9 +71,10 @@ export class StudentService {
     return this.http.put<any>(`${this.baseUrl}/modulos/${moduloId}`, modulo);
   }
 
-  // 12. Eliminar un módulo
-  deleteModulo(moduloId: number): Observable<any> {
-    return this.http.delete<any>(`${this.baseUrl}/modulos/${moduloId}`);
+  // 12. Eliminar un módulo del alumno
+  deleteModulo(moduloId: number, studentId?: number): Observable<any> {
+    const sId = studentId || 0;
+    return this.http.delete<any>(`${this.baseUrl}/modulos/${moduloId}/alumno/${sId}`);
   }
 
   // --- NUEVA FUNCIÓN CRÍTICA ---

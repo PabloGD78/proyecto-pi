@@ -55,6 +55,7 @@
           <h3>Añadir Observación</h3>
           <textarea [(ngModel)]="nuevaObservacion" rows="4" placeholder="Escribe aquí..."></textarea>
           <div class="obs-controls">
+            <label class="obs-label">Tipo de observación:</label>
             <select [(ngModel)]="tipoObservacion">
               <option value="General">General</option>
               <option value="Conducta">Conducta</option>
@@ -85,6 +86,26 @@
         </div>
       </div>
 
+      <!-- Modal Confirmación Observaciones -->
+      <app-confirm-dialog
+        [isOpen]="showConfirmDialog"
+        [title]="confirmDialogTitle"
+        [message]="confirmDialogMessage"
+        [confirmText]="'Eliminar'"
+        (confirmed)="onDialogConfirmed()"
+        (cancelled)="onDialogCancelled()">
+      </app-confirm-dialog>
+
+      <!-- Modal Confirmación Módulos -->
+      <app-confirm-dialog
+        [isOpen]="showConfirmModuloDialog"
+        [title]="'Eliminar módulo'"
+        [message]="'¿Estás seguro de que deseas eliminar este módulo? Esta acción no se puede deshacer.'"
+        [confirmText]="'Eliminar'"
+        (confirmed)="onDeleteModuloConfirmed()"
+        (cancelled)="onDeleteModuloCancelled()">
+      </app-confirm-dialog>
+
       <div *ngIf="activeTab === 'modulos'" class="tab-pane">
         <h2>Módulos y Asignaturas</h2>
         <div class="modulos-container">
@@ -92,7 +113,6 @@
             <h3>Añadir Módulo Extra</h3>
             <div class="form-section">
               <div class="form-group"><label>Nombre del Módulo *</label><input type="text" name="nombre" [(ngModel)]="nuevoModulo.nombre" placeholder="Ej: FOL"></div>
-              <div class="form-group"><label>Horas</label><input type="number" name="horas" [(ngModel)]="nuevoModulo.horas" placeholder="0"></div>
               <button class="btn-add" (click)="addModulo()">Agregar Manualmente</button>
             </div>
           </div>
@@ -101,12 +121,11 @@
             <div class="table-scroll">
               <table *ngIf="modulos && modulos.length > 0">
                 <thead>
-                  <tr><th>Nombre del Módulo</th><th>Horas</th><th style="width: 100px;">Acciones</th></tr>
+                  <tr><th>Nombre del Módulo</th><th style="width: 100px;">Acciones</th></tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let mod of modulos">
                     <td><strong>{{ mod.nombre_modulo }}</strong></td>
-                    <td>{{ mod.horas }}h</td>
                     <td><button class="btn-action btn-delete-minimal" (click)="deleteModulo(mod.id_modulo)">
     <span class="close-icon">×</span> Eliminar
   </button></td>

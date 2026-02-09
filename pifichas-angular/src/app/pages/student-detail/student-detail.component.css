@@ -219,6 +219,20 @@ input:focus, textarea:focus {
   display: flex;
   gap: 10px;
   margin-top: 15px;
+  align-items: center;
+}
+
+.obs-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a73e8;
+}
+
+.obs-controls select {
+  font-size: 15px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
 }
 
 .btn-add {

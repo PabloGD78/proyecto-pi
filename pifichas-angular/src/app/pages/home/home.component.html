@@ -3,6 +3,16 @@
     {{ notificationMessage }}
   </div>
 
+  <!-- Modal de Confirmación -->
+  <app-confirm-dialog 
+    [isOpen]="showConfirmDialog"
+    [title]="confirmDialogTitle"
+    [message]="confirmDialogMessage"
+    [confirmText]="'Eliminar'"
+    (confirmed)="onDialogConfirmed()"
+    (cancelled)="onDialogCancelled()">
+  </app-confirm-dialog>
+
   <div *ngIf="mostrarFormulario">
     <div class="page-header">
       <button class="btn-header-blue" (click)="mostrarFormulario = false">

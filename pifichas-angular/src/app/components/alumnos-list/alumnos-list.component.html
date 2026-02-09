@@ -17,6 +17,16 @@
     {{ notificationMessage }}
   </div>
 
+  <!-- Modal de Confirmación -->
+  <app-confirm-dialog 
+    [isOpen]="showConfirmDialog"
+    [title]="confirmDialogTitle"
+    [message]="confirmDialogMessage"
+    [confirmText]="'Eliminar'"
+    (confirmed)="onDialogConfirmed()"
+    (cancelled)="onDialogCancelled()">
+  </app-confirm-dialog>
+
   <hr>
 
   @if (mostrarFormulario) {

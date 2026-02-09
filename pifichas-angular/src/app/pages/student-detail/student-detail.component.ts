@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-dialog.component';
 
 import { StudentService } from '../../services/student.service';
 import { NotificationService } from '../../services/notification.service';
@@ -11,7 +12,7 @@ import { NotificationService } from '../../services/notification.service';
 @Component({
   selector: 'app-student-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ConfirmDialogComponent],
   templateUrl: './student-detail.component.html',
   styleUrl: './student-detail.component.css'
 })
@@ -33,6 +34,16 @@ export class StudentDetailComponent implements OnInit {
   tipoObservacion: string = 'General';
   visibleAlTutor: boolean = false;
   observaciones: any[] = [];
+
+  // Confirm dialog state for observations
+  showConfirmDialog: boolean = false;
+  confirmDialogTitle: string = '';
+  confirmDialogMessage: string = '';
+  observacionIdToDelete: number | null = null;
+
+  // Confirm dialog state for modules
+  showConfirmModuloDialog: boolean = false;
+  moduloIdToDelete: number | null = null;
 
   // Módulos (Aquí se cargarán los que insertamos por SQL)
   modulos: any[] = [];
@@ -71,13 +82,8 @@ export class StudentDetailComponent implements OnInit {
       next: (data: any) => {
         this.student = data;
         
-        // --- LÓGICA DE MÓDULOS AUTOMÁTICOS ---
-        // Si el alumno tiene curso (ej: ID 9), cargamos los módulos que insertamos por SQL
-        if (this.student.id_curso) {
-          this.loadModulosDelCurso(this.student.id_curso);
-        } else {
-          this.loadModulos(id); // Fallback a módulos individuales
-        }
+        // Cargar módulos (combinando curso + individuales)
+        this.loadAllModulos(id);
 
         try {
           this.dni = data.dni || '';
@@ -121,6 +127,38 @@ export class StudentDetailComponent implements OnInit {
       },
       error: (err) => console.warn('Sin módulos registrados')
     });
+  }
+
+  loadAllModulos(id: number): void {
+    // Si tiene curso, cargar módulos del curso + individuales
+    if (this.student?.id_curso) {
+      this.studentService.getModulosPorCurso(this.student.id_curso).subscribe({
+        next: (cursoModulos) => {
+          this.studentService.getModulos(id).subscribe({
+            next: (alumnModulos) => {
+              // Combinar: primero módulos del curso, luego individuales
+              this.modulos = [...cursoModulos, ...alumnModulos];
+              this.cdr.detectChanges();
+            },
+            error: () => {
+              this.modulos = cursoModulos;
+              this.cdr.detectChanges();
+            }
+          });
+        },
+        error: (err) => {
+          this.studentService.getModulos(id).subscribe({
+            next: (alumnModulos) => {
+              this.modulos = alumnModulos;
+              this.cdr.detectChanges();
+            },
+            error: () => console.warn('Sin módulos registrados')
+          });
+        }
+      });
+    } else {
+      this.loadModulos(id);
+    }
   }
 
   loadObservations(id: number): void {
@@ -182,13 +220,34 @@ export class StudentDetailComponent implements OnInit {
   }
 
   confirmDeleteObservation(obsId: number): void {
-    if (!confirm('¿Estás seguro de que deseas borrar esta observación?')) return;
-    this.studentService.deleteObservation(obsId).subscribe({
+    if (!obsId) return;
+    this.observacionIdToDelete = obsId;
+    this.confirmDialogTitle = 'Eliminar observación';
+    this.confirmDialogMessage = '¿Estás seguro de que deseas borrar esta observación? Esta acción no se puede deshacer.';
+    this.showConfirmDialog = true;
+  }
+
+  onDialogConfirmed(): void {
+    if (this.observacionIdToDelete === null) return;
+    const id = this.observacionIdToDelete;
+    this.studentService.deleteObservation(id).subscribe({
       next: () => {
         if (this.studentId) this.loadObservations(this.studentId);
         this.showNotificationMessage('Observación eliminada.', 'success');
+        this.showConfirmDialog = false;
+        this.observacionIdToDelete = null;
+      },
+      error: (err) => {
+        console.error('Error eliminando observación', err);
+        this.showConfirmDialog = false;
+        this.observacionIdToDelete = null;
       }
     });
+  }
+
+  onDialogCancelled(): void {
+    this.showConfirmDialog = false;
+    this.observacionIdToDelete = null;
   }
 
   getStudentInitials(): string {
@@ -200,31 +259,161 @@ export class StudentDetailComponent implements OnInit {
 
   async generarPDF(): Promise<void> {
     if (!this.student) return;
+    
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const margin = 15;
     let y = 20;
 
+    // ========== ENCABEZADO ==========
     pdf.setFontSize(18);
-    pdf.text('Informe del Alumno', pageWidth / 2, y, { align: 'center' });
-    y += 10;
+    pdf.setTextColor(26, 115, 232);
+    pdf.text('INFORME DEL ALUMNO', pageWidth / 2, y, { align: 'center' });
+    pdf.setTextColor(0, 0, 0);
+    y += 12;
 
+    // ========== DATOS BÁSICOS ==========
     pdf.setFontSize(12);
-    pdf.text(`Alumno: ${this.student.nombre} ${this.student.apellidos}`, margin, y);
+    pdf.setFont('', 'bold');
+    pdf.text('DATOS BÁSICOS', margin, y);
+    pdf.setFont('', 'normal');
     y += 7;
-    pdf.text(`Curso: ${this.student.curso_nombre || 'No asignado'}`, margin, y);
-    y += 15;
 
-    // Tabla de Módulos
-    pdf.text('Módulos Académicos', margin, y);
-    autoTable(pdf as any, {
-      startY: y + 5,
-      head: [['Módulo', 'Horas']],
-      body: this.modulos.map(m => [m.nombre_modulo, m.horas + 'h']),
-      headStyles: { fillColor: [26, 115, 232] }
+    const basicData = [
+      ['Nombre:', `${this.student.nombre} ${this.student.apellidos}`],
+      ['ID Alumno:', this.student.id.toString()],
+      ['DNI:', this.dni || 'No especificado'],
+      ['Fecha de Nacimiento:', this.fechaNacimiento ? new Date(this.fechaNacimiento).toLocaleDateString('es-ES') : 'No especificado'],
+      ['Curso:', this.student.curso_nombre || 'No asignado'],
+      ['Contacto Tutor:', this.contactoTutor || 'No especificado']
+    ];
+
+    basicData.forEach(([label, value]) => {
+      pdf.setFont('', 'bold');
+      pdf.text(label, margin, y);
+      pdf.setFont('', 'normal');
+      pdf.text(value, margin + 50, y);
+      y += 6;
     });
 
-    pdf.save(`informe_${this.student.nombre}.pdf`);
+    y += 8;
+
+    // ========== FICHA MÉDICA ==========
+    pdf.setFont('', 'bold');
+    pdf.setFontSize(12);
+    pdf.text('FICHA MÉDICA Y CURRICULAR', margin, y);
+    pdf.setFont('', 'normal');
+    y += 7;
+
+    // Datos Médicos
+    pdf.setFont('', 'bold');
+    pdf.text('Datos Médicos:', margin, y);
+    pdf.setFont('', 'normal');
+    y += 5;
+    const datosMedicosText = this.datosMedicos || 'No especificado';
+    const datosMedicosLines = pdf.splitTextToSize(datosMedicosText, pageWidth - 2 * margin);
+    pdf.text(datosMedicosLines, margin, y);
+    y += datosMedicosLines.length * 5 + 3;
+
+    // Adaptaciones Curriculares
+    pdf.setFont('', 'bold');
+    pdf.text('Adaptaciones Curriculares:', margin, y);
+    pdf.setFont('', 'normal');
+    y += 5;
+    const adaptacionesText = this.adaptacionesCurriculares || 'No especificado';
+    const adaptacionesLines = pdf.splitTextToSize(adaptacionesText, pageWidth - 2 * margin);
+    pdf.text(adaptacionesLines, margin, y);
+    y += adaptacionesLines.length * 5 + 8;
+
+    // Verificar si necesitamos nueva página
+    if (y > 240) {
+      pdf.addPage();
+      y = 20;
+    }
+
+    // ========== OBSERVACIONES ==========
+    pdf.setFont('', 'bold');
+    pdf.setFontSize(12);
+    pdf.text('OBSERVACIONES', margin, y);
+    pdf.setFont('', 'normal');
+    y += 7;
+
+    if (this.observaciones && this.observaciones.length > 0) {
+      this.observaciones.forEach((obs, index) => {
+        if (y > 250) {
+          pdf.addPage();
+          y = 20;
+        }
+        
+        pdf.setFont('', 'bold');
+        pdf.setFontSize(10);
+        pdf.text(`Observación ${index + 1} (${new Date(obs.fecha).toLocaleDateString('es-ES')})`, margin, y);
+        pdf.setFont('', 'normal');
+        pdf.setFontSize(9);
+        y += 5;
+        
+        const obsLines = pdf.splitTextToSize(obs.contenido, pageWidth - 2 * margin);
+        pdf.text(obsLines, margin, y);
+        y += obsLines.length * 4 + 3;
+        
+        if (obs.tipo) {
+          pdf.setFont('', 'italic');
+          pdf.setFontSize(8);
+          pdf.text(`Tipo: ${obs.tipo}`, margin, y);
+          y += 4;
+        }
+        pdf.setFontSize(9);
+        y += 2;
+      });
+    } else {
+      pdf.text('No hay observaciones registradas', margin, y);
+      y += 8;
+    }
+
+    // Verificar si necesitamos nueva página
+    if (y > 240) {
+      pdf.addPage();
+      y = 20;
+    }
+
+    // ========== MÓDULOS ==========
+    pdf.setFont('', 'bold');
+    pdf.setFontSize(12);
+    pdf.text('MÓDULOS ACADÉMICOS', margin, y);
+    y += 10;
+
+    if (this.modulos && this.modulos.length > 0) {
+      autoTable(pdf as any, {
+        startY: y,
+        head: [['Módulo']],
+        body: this.modulos.map(m => [
+          m.nombre_modulo || 'N/A'
+        ]),
+        headStyles: { fillColor: [26, 115, 232], textColor: [255, 255, 255] },
+        bodyStyles: { textColor: [0, 0, 0] },
+        margin: margin
+      });
+    } else {
+      pdf.setFont('', 'normal');
+      pdf.text('No hay módulos asignados', margin, y);
+    }
+
+    // ========== PIE DE PÁGINA ==========
+    const pageCount = (pdf as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      pdf.setPage(i);
+      pdf.setFontSize(9);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(
+        `Página ${i} de ${pageCount} - Generado: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}`,
+        pageWidth / 2,
+        pdf.internal.pageSize.getHeight() - 8,
+        { align: 'center' }
+      );
+    }
+
+    pdf.save(`informe_${this.student.nombre}_${this.student.apellidos}.pdf`);
+    this.showNotificationMessage('✅ PDF generado correctamente', 'success');
   }
 
   showNotificationMessage(message: string, type: 'success' | 'error' | 'info' | 'warning'): void {
@@ -237,22 +426,46 @@ export class StudentDetailComponent implements OnInit {
   // Mantengo tus funciones de gestión manual por si quieres añadir extras
   addModulo(): void {
     if (!this.nuevoModulo.nombre.trim() || !this.studentId) return;
+    console.log('Enviando módulo:', this.nuevoModulo);
     this.studentService.addModulo(this.studentId, this.nuevoModulo).subscribe({
       next: () => {
-        this.loadStudentData(this.studentId!);
+        this.loadAllModulos(this.studentId!);
         this.nuevoModulo = { nombre: '', codigo: '', horas: 0, calificacion: null, estado: 'Pendiente' };
         this.showNotificationMessage('Módulo añadido', 'success');
+      },
+      error: (err) => {
+        console.error('Error al añadir módulo:', err);
+        this.showNotificationMessage('Error al añadir módulo', 'error');
       }
     });
   }
 
   deleteModulo(moduloId: number): void {
-    if (!confirm('¿Eliminar módulo?')) return;
-    this.studentService.deleteModulo(moduloId).subscribe({
+    if (!moduloId) return;
+    this.moduloIdToDelete = moduloId;
+    this.showConfirmModuloDialog = true;
+  }
+
+  onDeleteModuloConfirmed(): void {
+    if (this.moduloIdToDelete === null) return;
+    const id = this.moduloIdToDelete;
+    this.studentService.deleteModulo(id, this.studentId || 0).subscribe({
       next: () => {
-        this.loadStudentData(this.studentId!);
+        this.loadAllModulos(this.studentId!);
         this.showNotificationMessage('Módulo eliminado', 'success');
+        this.showConfirmModuloDialog = false;
+        this.moduloIdToDelete = null;
+      },
+      error: (err) => {
+        console.error('Error eliminando módulo', err);
+        this.showConfirmModuloDialog = false;
+        this.moduloIdToDelete = null;
       }
     });
+  }
+
+  onDeleteModuloCancelled(): void {
+    this.showConfirmModuloDialog = false;
+    this.moduloIdToDelete = null;
   }
 }

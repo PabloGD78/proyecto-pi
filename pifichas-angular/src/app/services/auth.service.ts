@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
@@ -9,7 +10,7 @@ import { map, catchError } from 'rxjs/operators';
 export class AuthService {
   private baseUrl = 'http://localhost:3000';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   login(correo: string, contrasenia: string): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/login`, { correo, contrasenia }).pipe(
@@ -30,7 +31,13 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
-    window.location.href = '/login';
+    // Navegar usando el Router para respetar el `baseHref` de la app
+    try {
+      this.router.navigate(['/login']);
+    } catch {
+      // Fallback por si no está disponible
+      window.location.href = '/login';
+    }
   }
 
   isAuthenticated(): boolean {

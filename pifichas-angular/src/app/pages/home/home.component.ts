@@ -1,16 +1,17 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router'; // Añadido RouterModule para el routerLink
+import { Router, RouterModule } from '@angular/router';
 import { StudentService } from '../../services/student.service';
 import { NotificationService } from '../../services/notification.service';
 import { AuthService } from '../../services/auth.service'; 
 import { AddAlumnoComponent } from '../../components/add-alumno/add-alumno.component';
+import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, AddAlumnoComponent, RouterModule], // Añadido RouterModule
+  imports: [CommonModule, FormsModule, AddAlumnoComponent, RouterModule, ConfirmDialogComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
@@ -27,6 +28,12 @@ export class HomeComponent implements OnInit {
   notificationMessage: string = '';
   notificationType: 'success' | 'error' | 'info' | 'warning' = 'info';
   showNotification: boolean = false;
+
+  // Variables para el diálogo de confirmación
+  showConfirmDialog: boolean = false;
+  confirmDialogTitle: string = '';
+  confirmDialogMessage: string = '';
+  studentIdToDelete: number | null = null;
 
   constructor(
     private studentService: StudentService, 
@@ -102,9 +109,21 @@ export class HomeComponent implements OnInit {
 
   confirmDeleteStudent(id: number | undefined, nombre: string, apellidos: string): void {
     if (!id) return;
-    if (confirm(`¿Estás seguro de que deseas eliminar a ${nombre} ${apellidos}?`)) {
-      this.deleteStudent(id);
+    const fullName = `${nombre} ${apellidos}`;
+    this.studentIdToDelete = id;
+    this.confirmDialogTitle = 'Eliminar alumno';
+    this.confirmDialogMessage = `¿Estás seguro de que deseas eliminar a ${fullName}? Esta acción no se puede deshacer.`;
+    this.showConfirmDialog = true;
+  }
+
+  onDialogConfirmed(): void {
+    if (this.studentIdToDelete !== null) {
+      this.deleteStudent(this.studentIdToDelete);
     }
+  }
+
+  onDialogCancelled(): void {
+    this.studentIdToDelete = null;
   }
 
   deleteStudent(id: number): void {
