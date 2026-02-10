@@ -15,6 +15,7 @@ export class NavbarComponent implements OnInit {
   userInitials = 'WA';
   isGestionActive = true;
   isReportsActive = false;
+  showLogout = true; // Nueva propiedad
 
   constructor(private router: Router, private auth: AuthService) {}
 
@@ -24,10 +25,13 @@ export class NavbarComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Ejecutamos la lógica una vez al cargar por si entramos directamente a una URL
+    this.updateActiveButton(this.router.url);
+
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
-        this.updateActiveButton(event.url);
+        this.updateActiveButton(event.urlAfterRedirects || event.url);
       });
   }
 
@@ -38,6 +42,8 @@ export class NavbarComponent implements OnInit {
   private updateActiveButton(url: string): void {
     this.isGestionActive = url.includes('/home');
     this.isReportsActive = url.includes('/reports');
+    
+    // Si la URL contiene 'login' o es la raíz, ocultamos el botón
+    this.showLogout = !(url.includes('/login') || url === '/');
   }
 }
-

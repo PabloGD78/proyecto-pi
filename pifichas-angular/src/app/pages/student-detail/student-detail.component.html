@@ -77,7 +77,11 @@
                   <td>{{ obs.fecha | date:'dd/MM/yy' }}</td>
                   <td><span class="badge">{{ obs.tipo }}</span></td>
                   <td>{{ obs.contenido }}</td>
-                  <td><button class="btn-delete" (click)="confirmDeleteObservation(obs.id)">Borrar</button></td>
+                  <td>
+  <button class="btn-action btn-delete-minimal" (click)="confirmDeleteObservation(obs.id)">
+    <span class="close-icon">×</span> Eliminar
+  </button>
+</td>
                 </tr>
                 <tr *ngIf="observaciones.length === 0"><td colspan="4">No hay observaciones registradas.</td></tr>
               </tbody>

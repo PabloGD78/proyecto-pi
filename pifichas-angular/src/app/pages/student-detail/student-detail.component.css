@@ -527,3 +527,12 @@ body.generating-pdf .obs-controls {
 td button.btn-delete-minimal {
   margin: 0 auto; /* Centra el botón si la celda es ancha */
 }
+
+/* Asegura que la columna de acciones en observaciones esté centrada como en módulos */
+.observations-right table th:last-child,
+.observations-right table td:last-child {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

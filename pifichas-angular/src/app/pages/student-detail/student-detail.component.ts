@@ -45,7 +45,7 @@ export class StudentDetailComponent implements OnInit {
   showConfirmModuloDialog: boolean = false;
   moduloIdToDelete: number | null = null;
 
-  // Módulos (Aquí se cargarán los que insertamos por SQL)
+  // Módulos
   modulos: any[] = [];
   nuevoModulo = {
     nombre: '',
@@ -108,7 +108,6 @@ export class StudentDetailComponent implements OnInit {
     });
   }
 
-  // Carga los módulos base del ciclo (DAM, DAW, Infantil...)
   loadModulosDelCurso(idCurso: number): void {
     this.studentService.getModulosPorCurso(idCurso).subscribe({
       next: (data) => {
@@ -130,13 +129,11 @@ export class StudentDetailComponent implements OnInit {
   }
 
   loadAllModulos(id: number): void {
-    // Si tiene curso, cargar módulos del curso + individuales
     if (this.student?.id_curso) {
       this.studentService.getModulosPorCurso(this.student.id_curso).subscribe({
         next: (cursoModulos) => {
           this.studentService.getModulos(id).subscribe({
             next: (alumnModulos) => {
-              // Combinar: primero módulos del curso, luego individuales
               this.modulos = [...cursoModulos, ...alumnModulos];
               this.cdr.detectChanges();
             },
@@ -257,163 +254,177 @@ export class StudentDetailComponent implements OnInit {
     return 'AL';
   }
 
+  // ==========================================
+  // GENERACIÓN DE PDF PROFESIONAL (CORREGIDA)
+  // ==========================================
   async generarPDF(): Promise<void> {
     if (!this.student) return;
-    
+
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 15;
-    let y = 20;
+    const primaryColor = [26, 115, 232] as [number, number, number]; // Azul corporativo
+    
+    // Variable para controlar la posición vertical dinámica entre tablas
+    let finalY = 0; 
 
-    // ========== ENCABEZADO ==========
-    pdf.setFontSize(18);
-    pdf.setTextColor(26, 115, 232);
-    pdf.text('INFORME DEL ALUMNO', pageWidth / 2, y, { align: 'center' });
+    // 1. ENCABEZADO TIPO BANNER
+    // Rectángulo azul de fondo
+    pdf.setFillColor(...primaryColor);
+    pdf.rect(0, 0, pageWidth, 35, 'F');
+
+    // Título en blanco
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(22);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('INFORME DEL ALUMNO', margin, 22);
+
+    // Subtítulo con fecha
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    const fechaGen = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+    pdf.text(`Generado el: ${fechaGen}`, margin, 29);
+
+    // Reiniciar color texto a negro
     pdf.setTextColor(0, 0, 0);
-    y += 12;
 
-    // ========== DATOS BÁSICOS ==========
-    pdf.setFontSize(12);
-    pdf.setFont('', 'bold');
-    pdf.text('DATOS BÁSICOS', margin, y);
-    pdf.setFont('', 'normal');
-    y += 7;
-
-    const basicData = [
-      ['Nombre:', `${this.student.nombre} ${this.student.apellidos}`],
-      ['ID Alumno:', this.student.id.toString()],
-      ['DNI:', this.dni || 'No especificado'],
-      ['Fecha de Nacimiento:', this.fechaNacimiento ? new Date(this.fechaNacimiento).toLocaleDateString('es-ES') : 'No especificado'],
-      ['Curso:', this.student.curso_nombre || 'No asignado'],
-      ['Contacto Tutor:', this.contactoTutor || 'No especificado']
+    // 2. DATOS BÁSICOS (Usando autoTable para alineación perfecta)
+    // Usamos any[] para evitar errores de tipo estricto en el contenido de la tabla
+    const basicInfoBody: any[] = [
+      ['Nombre Completo', `${this.student.nombre} ${this.student.apellidos}`],
+      ['ID Alumno', this.student.id.toString()],
+      ['DNI', this.dni || 'No especificado'],
+      ['Fecha de Nacimiento', this.fechaNacimiento ? new Date(this.fechaNacimiento).toLocaleDateString('es-ES') : 'No especificado'],
+      ['Curso Actual', this.student.curso_nombre || 'No asignado'],
+      ['Contacto Tutor', this.contactoTutor || 'No especificado']
     ];
 
-    basicData.forEach(([label, value]) => {
-      pdf.setFont('', 'bold');
-      pdf.text(label, margin, y);
-      pdf.setFont('', 'normal');
-      pdf.text(value, margin + 50, y);
-      y += 6;
+    autoTable(pdf as any, {
+      startY: 45,
+      head: [[{ content: 'DATOS BÁSICOS', colSpan: 2, styles: { halign: 'left', fillColor: primaryColor, textColor: 255, fontSize: 12, fontStyle: 'bold' } }]],
+      body: basicInfoBody,
+      theme: 'grid',
+      styles: { fontSize: 10, cellPadding: 5 },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 50, fillColor: [245, 247, 250] }, // Columna etiquetas gris claro
+        1: { cellWidth: 'auto' }
+      },
+      didDrawPage: (data) => {
+        // Comprobación de nulidad para data.cursor
+        if (data.cursor) {
+          finalY = data.cursor.y;
+        }
+      }
     });
 
-    y += 8;
+    // 3. FICHA MÉDICA (Adaptada para textos largos)
+    finalY += 10; // Espacio entre tablas
 
-    // ========== FICHA MÉDICA ==========
-    pdf.setFont('', 'bold');
-    pdf.setFontSize(12);
-    pdf.text('FICHA MÉDICA Y CURRICULAR', margin, y);
-    pdf.setFont('', 'normal');
-    y += 7;
+    // Usamos any[] para que TS no se queje del estilo 'bold' (string vs FontStyle)
+    const medicalBody: any[] = [
+      [{ content: 'DATOS MÉDICOS', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }],
+      [this.datosMedicos || 'Sin información registrada.'],
+      [{ content: 'ADAPTACIONES CURRICULARES', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }],
+      [this.adaptacionesCurriculares || 'Sin adaptaciones registradas.']
+    ];
 
-    // Datos Médicos
-    pdf.setFont('', 'bold');
-    pdf.text('Datos Médicos:', margin, y);
-    pdf.setFont('', 'normal');
-    y += 5;
-    const datosMedicosText = this.datosMedicos || 'No especificado';
-    const datosMedicosLines = pdf.splitTextToSize(datosMedicosText, pageWidth - 2 * margin);
-    pdf.text(datosMedicosLines, margin, y);
-    y += datosMedicosLines.length * 5 + 3;
+    autoTable(pdf as any, {
+      startY: finalY,
+      head: [[{ content: 'FICHA MÉDICA Y CURRICULAR', styles: { halign: 'left', fillColor: primaryColor, textColor: 255, fontSize: 12, fontStyle: 'bold' } }]],
+      body: medicalBody,
+      theme: 'grid',
+      styles: { fontSize: 10, cellPadding: 5 },
+      didDrawPage: (data) => {
+        if (data.cursor) {
+          finalY = data.cursor.y;
+        }
+      }
+    });
 
-    // Adaptaciones Curriculares
-    pdf.setFont('', 'bold');
-    pdf.text('Adaptaciones Curriculares:', margin, y);
-    pdf.setFont('', 'normal');
-    y += 5;
-    const adaptacionesText = this.adaptacionesCurriculares || 'No especificado';
-    const adaptacionesLines = pdf.splitTextToSize(adaptacionesText, pageWidth - 2 * margin);
-    pdf.text(adaptacionesLines, margin, y);
-    y += adaptacionesLines.length * 5 + 8;
+    // 4. OBSERVACIONES (Tabla historial)
+    finalY += 10;
 
-    // Verificar si necesitamos nueva página
-    if (y > 240) {
-      pdf.addPage();
-      y = 20;
-    }
-
-    // ========== OBSERVACIONES ==========
-    pdf.setFont('', 'bold');
-    pdf.setFontSize(12);
-    pdf.text('OBSERVACIONES', margin, y);
-    pdf.setFont('', 'normal');
-    y += 7;
-
+    let obsBody: any[] = [];
     if (this.observaciones && this.observaciones.length > 0) {
-      this.observaciones.forEach((obs, index) => {
-        if (y > 250) {
-          pdf.addPage();
-          y = 20;
-        }
-        
-        pdf.setFont('', 'bold');
-        pdf.setFontSize(10);
-        pdf.text(`Observación ${index + 1} (${new Date(obs.fecha).toLocaleDateString('es-ES')})`, margin, y);
-        pdf.setFont('', 'normal');
-        pdf.setFontSize(9);
-        y += 5;
-        
-        const obsLines = pdf.splitTextToSize(obs.contenido, pageWidth - 2 * margin);
-        pdf.text(obsLines, margin, y);
-        y += obsLines.length * 4 + 3;
-        
-        if (obs.tipo) {
-          pdf.setFont('', 'italic');
-          pdf.setFontSize(8);
-          pdf.text(`Tipo: ${obs.tipo}`, margin, y);
-          y += 4;
-        }
-        pdf.setFontSize(9);
-        y += 2;
-      });
+      obsBody = this.observaciones.map(obs => [
+        new Date(obs.fecha).toLocaleDateString('es-ES'),
+        obs.tipo || 'General',
+        obs.contenido
+      ]);
     } else {
-      pdf.text('No hay observaciones registradas', margin, y);
-      y += 8;
+      obsBody = [['-', '-', 'No hay observaciones registradas.']];
     }
 
-    // Verificar si necesitamos nueva página
-    if (y > 240) {
+    // Verificar si cabe en la página actual antes de dibujar
+    if (finalY > pageHeight - 50) {
       pdf.addPage();
-      y = 20;
+      finalY = 20;
     }
 
-    // ========== MÓDULOS ==========
-    pdf.setFont('', 'bold');
-    pdf.setFontSize(12);
-    pdf.text('MÓDULOS ACADÉMICOS', margin, y);
-    y += 10;
+    autoTable(pdf as any, {
+      startY: finalY,
+      head: [['Fecha', 'Tipo', 'Contenido de la Observación']],
+      body: obsBody,
+      theme: 'striped',
+      headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak' },
+      columnStyles: {
+        0: { cellWidth: 25 }, 
+        1: { cellWidth: 25, fontStyle: 'bold' },
+        2: { cellWidth: 'auto' }
+      },
+      didDrawPage: (data) => {
+        if (data.cursor) {
+          finalY = data.cursor.y;
+        }
+      }
+    });
 
-    if (this.modulos && this.modulos.length > 0) {
-      autoTable(pdf as any, {
-        startY: y,
-        head: [['Módulo']],
-        body: this.modulos.map(m => [
-          m.nombre_modulo || 'N/A'
-        ]),
-        headStyles: { fillColor: [26, 115, 232], textColor: [255, 255, 255] },
-        bodyStyles: { textColor: [0, 0, 0] },
-        margin: margin
-      });
+    // 5. MÓDULOS ACADÉMICOS
+    // Obtenemos la Y final de la última tabla generada
+    if ((pdf as any).lastAutoTable && (pdf as any).lastAutoTable.finalY) {
+         finalY = (pdf as any).lastAutoTable.finalY + 10;
     } else {
-      pdf.setFont('', 'normal');
-      pdf.text('No hay módulos asignados', margin, y);
+         finalY += 10;
     }
 
-    // ========== PIE DE PÁGINA ==========
-    const pageCount = (pdf as any).internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
+    if (finalY > pageHeight - 40) {
+      pdf.addPage();
+      finalY = 20;
+    }
+
+    const modulosBody = (this.modulos && this.modulos.length > 0) 
+      ? this.modulos.map(m => [m.nombre_modulo]) 
+      : [['Sin módulos asignados']];
+
+    autoTable(pdf as any, {
+      startY: finalY,
+      head: [['MÓDULOS ACADÉMICOS ASIGNADOS']],
+      body: modulosBody,
+      theme: 'striped',
+      headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold', halign: 'left' },
+      styles: { fontSize: 10, cellPadding: 4 },
+      didDrawPage: (data) => {
+        if (data.cursor) {
+          finalY = data.cursor.y;
+        }
+      }
+    });
+
+    // 6. PIE DE PÁGINA (Numeración)
+    const totalPages = (pdf as any).internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
       pdf.setPage(i);
-      pdf.setFontSize(9);
+      pdf.setFontSize(8);
       pdf.setTextColor(150, 150, 150);
-      pdf.text(
-        `Página ${i} de ${pageCount} - Generado: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}`,
-        pageWidth / 2,
-        pdf.internal.pageSize.getHeight() - 8,
-        { align: 'center' }
-      );
+      const footerText = `Página ${i} de ${totalPages} - Informe Confidencial - ${this.student.nombre} ${this.student.apellidos}`;
+      pdf.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
     }
 
-    pdf.save(`informe_${this.student.nombre}_${this.student.apellidos}.pdf`);
-    this.showNotificationMessage('✅ PDF generado correctamente', 'success');
+    // Guardar
+    pdf.save(`Informe_${this.student.nombre}_${this.student.apellidos}.pdf`);
+    this.showNotificationMessage('✅ PDF generado con éxito', 'success');
   }
 
   showNotificationMessage(message: string, type: 'success' | 'error' | 'info' | 'warning'): void {
@@ -423,7 +434,6 @@ export class StudentDetailComponent implements OnInit {
     setTimeout(() => this.showNotification = false, 4000);
   }
 
-  // Mantengo tus funciones de gestión manual por si quieres añadir extras
   addModulo(): void {
     if (!this.nuevoModulo.nombre.trim() || !this.studentId) return;
     console.log('Enviando módulo:', this.nuevoModulo);
