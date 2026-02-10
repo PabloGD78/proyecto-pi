@@ -9,16 +9,17 @@
     </div>
   </div>
 
-  <!-- Modal Confirmación -->
+  <!-- MODAL CONFIRMACIÓN (CREAR / ELIMINAR / AVISOS) -->
   <app-confirm-dialog
     [isOpen]="showConfirmDialog"
     [title]="confirmDialogTitle"
     [message]="confirmDialogMessage"
-    [confirmText]="'Eliminar'"
+    [confirmText]="confirmButtonText"
     (confirmed)="onDialogConfirmed()"
     (cancelled)="onDialogCancelled()">
   </app-confirm-dialog>
 
+  <!-- FORMULARIO CREAR PROFESOR -->
   <div *ngIf="mostrarFormulario" class="form-container">
     <h2>Registrar Nuevo Profesor</h2>
     <div class="form-grid">
@@ -29,6 +30,7 @@
     </div>
   </div>
 
+  <!-- LISTADO -->
   <div class="table-container" *ngIf="!mostrarFormulario">
     <div *ngIf="cargando" class="loading-text">Cargando profesores...</div>
 
@@ -53,17 +55,16 @@
             </span>
           </td>
           <td class="action-cell">
-            <button class="btn-delete" (click)="eliminarProfe(profe.id, profe.nombre)">🗑️ Eliminar</button>
+            <button class="btn-delete" (click)="eliminarProfe(profe.id, profe.nombre)">
+              🗑️ Eliminar
+            </button>
           </td>
         </tr>
       </tbody>
     </table>
 
-    <table class="students-table" *ngIf="!cargando && profesores.length > 0">
-   </table>
-
-<div *ngIf="!cargando && profesores.length === 0" class="no-results">
-  No se han encontrado profesores activos.
-</div>
+    <div *ngIf="!cargando && profesores.length === 0" class="no-results">
+      No se han encontrado profesores activos.
+    </div>
   </div>
 </div>

@@ -1,11 +1,23 @@
 <div class="form-container">
   <h2 class="title">Registro de Nuevo Estudiante</h2>
-  
+
+  <!-- MODAL CONFIRMACIÓN -->
+  <app-confirm-dialog
+    [isOpen]="showConfirmDialog"
+    [title]="confirmDialogTitle"
+    [message]="confirmDialogMessage"
+    [confirmText]="'Confirmar'"
+    (confirmed)="onDialogConfirmed()"
+    (cancelled)="onDialogCancelled()">
+  </app-confirm-dialog>
+
   <div *ngIf="showNotification" class="notification" [ngClass]="notificationType">
     {{ notificationMessage }}
   </div>
-  
-  <form (ngSubmit)="registrar()" #alumnoForm="ngForm">
+
+  <!-- ⬇️ CAMBIO AQUÍ -->
+  <form (ngSubmit)="abrirConfirmacion()" #alumnoForm="ngForm">
+
     <div class="input-group">
       <label>Nombre</label>
       <input type="text" [(ngModel)]="nuevoAlumno.nombre" name="nombre" required placeholder="Ej: Juan">

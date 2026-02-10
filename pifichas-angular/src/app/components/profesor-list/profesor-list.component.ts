@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { FormsModule } from '@angular/forms'; 
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
@@ -13,116 +13,136 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
   styleUrls: ['./profesor-list.component.css']
 })
 export class ProfesorListComponent implements OnInit {
+
   profesores: any[] = [];
   mostrarFormulario = false;
-  cargando = true; 
-  nuevoProfe = { nombre: '', email: '', contrasenia: '' };
-  // Confirm dialog state
-  showConfirmDialog: boolean = false;
-  confirmDialogTitle: string = '';
-  confirmDialogMessage: string = '';
+  cargando = true;
+
+  nuevoProfe = {
+    nombre: '',
+    email: '',
+    contrasenia: ''
+  };
+
+  // MODAL
+  showConfirmDialog = false;
+  confirmDialogTitle = '';
+  confirmDialogMessage = '';
+  confirmButtonText = 'Aceptar';
+
+  // CONTROL ACCIONES
+  accionPendiente: 'crear' | 'eliminar' | null = null;
   profesorIdToDelete: number | null = null;
 
   constructor(
-    private http: HttpClient, 
-    private cd: ChangeDetectorRef // ✅ Inyectado para forzar el refresco visual
+    private http: HttpClient,
+    private cd: ChangeDetectorRef
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.cargarProfesores();
   }
 
-  cargarProfesores() {
+  cargarProfesores(): void {
     const token = localStorage.getItem('token');
-    
     if (!token) {
-      console.warn("No se encontró token");
       this.cargando = false;
       return;
     }
 
+    const headers = { Authorization: `Bearer ${token}` };
     this.cargando = true;
-    const headers = { 'Authorization': `Bearer ${token}` };
-    
+
     this.http.get<any[]>('http://localhost:3000/admin/profesores', { headers })
       .subscribe({
         next: (data) => {
-          console.log("Servidor envió:", data);
-          
-          if (data && Array.isArray(data)) {
-            // Filtramos al admin de forma segura
-            const filtrados = data.filter(p => {
-              const mail = (p.email || '').toLowerCase().trim();
-              return mail !== 'admin@sistema.com';
-            });
-
-            this.profesores = [...filtrados]; 
-          }
-          
-          // ✅ Finalizamos carga y forzamos a Angular a pintar la tabla
-          this.cargando = false; 
-          this.cd.detectChanges(); 
-          console.log("Tabla lista con:", this.profesores.length, "profesores");
-        },
-        error: (err) => {
-          console.error("Error en la petición:", err);
+          this.profesores = (data || []).filter(p =>
+            (p.email || '').toLowerCase().trim() !== 'admin@sistema.com'
+          );
           this.cargando = false;
           this.cd.detectChanges();
-          if (err.status === 401 || err.status === 403) {
-            console.warn("Sesión expirada");
-          }
+        },
+        error: () => {
+          this.cargando = false;
+          this.cd.detectChanges();
         }
       });
   }
 
-  guardarProfesor() {
+  // ===== CREAR PROFESOR =====
+  guardarProfesor(): void {
+
     if (!this.nuevoProfe.nombre || !this.nuevoProfe.email || !this.nuevoProfe.contrasenia) {
-      alert('Por favor, rellena todos los campos');
+      this.confirmDialogTitle = 'Campos incompletos';
+      this.confirmDialogMessage = 'Debes rellenar todos los campos.';
+      this.confirmButtonText = 'Entendido';
+      this.accionPendiente = null;
+      this.showConfirmDialog = true;
       return;
     }
 
-    const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
-    this.http.post('http://localhost:3000/admin/profesores', this.nuevoProfe, { headers })
-      .subscribe({
-        next: () => {
-          alert('Profesor creado con éxito');
-          this.nuevoProfe = { nombre: '', email: '', contrasenia: '' };
-          this.mostrarFormulario = false;
-          this.cargarProfesores();
-        },
-        error: () => alert('Error al guardar. El correo podría ya existir.')
-      });
-  }
-
-  eliminarProfe(id: number, nombre: string) {
-    if (!id) return;
-    this.profesorIdToDelete = id;
-    this.confirmDialogTitle = 'Eliminar profesor';
-    this.confirmDialogMessage = `¿Seguro que quieres eliminar al profesor ${nombre}? Esta acción no se puede deshacer.`;
+    this.confirmDialogTitle = 'Confirmar creación';
+    this.confirmDialogMessage = `¿Deseas crear al profesor ${this.nuevoProfe.nombre}?`;
+    this.confirmButtonText = 'Crear';
+    this.accionPendiente = 'crear';
     this.showConfirmDialog = true;
   }
 
+  // ===== ELIMINAR PROFESOR =====
+  eliminarProfe(id: number, nombre: string): void {
+    this.profesorIdToDelete = id;
+    this.confirmDialogTitle = 'Eliminar profesor';
+    this.confirmDialogMessage = `¿Seguro que quieres eliminar al profesor ${nombre}? Esta acción no se puede deshacer.`;
+    this.confirmButtonText = 'Eliminar';
+    this.accionPendiente = 'eliminar';
+    this.showConfirmDialog = true;
+  }
+
+  // ===== CONFIRMAR MODAL =====
   onDialogConfirmed(): void {
-    if (this.profesorIdToDelete === null) return;
-    const id = this.profesorIdToDelete;
-    const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
-    this.http.delete(`http://localhost:3000/admin/profesores/${id}`, { headers })
-      .subscribe({
-        next: () => {
-          this.cargarProfesores();
-          this.showConfirmDialog = false;
-          this.profesorIdToDelete = null;
-        },
-        error: (err) => {
-          console.error('Error eliminando profesor', err);
-          this.showConfirmDialog = false;
-          this.profesorIdToDelete = null;
-        }
-      });
+
+    const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
+
+    // CREAR
+    if (this.accionPendiente === 'crear') {
+      this.http.post('http://localhost:3000/admin/profesores', this.nuevoProfe, { headers })
+        .subscribe({
+          next: () => {
+            this.nuevoProfe = { nombre: '', email: '', contrasenia: '' };
+            this.mostrarFormulario = false;
+            this.cargarProfesores();
+            this.cerrarModal();
+          },
+          error: () => {
+            this.confirmDialogTitle = 'Error';
+            this.confirmDialogMessage = 'No se pudo crear el profesor. El correo puede existir.';
+            this.confirmButtonText = 'Cerrar';
+            this.accionPendiente = null;
+          }
+        });
+      return;
+    }
+
+    // ELIMINAR
+    if (this.accionPendiente === 'eliminar' && this.profesorIdToDelete !== null) {
+      this.http.delete(`http://localhost:3000/admin/profesores/${this.profesorIdToDelete}`, { headers })
+        .subscribe({
+          next: () => {
+            this.cargarProfesores();
+            this.cerrarModal();
+          },
+          error: () => this.cerrarModal()
+        });
+    }
   }
 
   onDialogCancelled(): void {
+    this.cerrarModal();
+  }
+
+  private cerrarModal(): void {
     this.showConfirmDialog = false;
+    this.accionPendiente = null;
     this.profesorIdToDelete = null;
   }
 }
