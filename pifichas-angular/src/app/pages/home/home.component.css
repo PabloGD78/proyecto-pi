@@ -2,17 +2,17 @@
 :host {
   display: block; 
   height: auto;
-  background-color: #F2EEF0; /* Aplicamos el color al host también para evitar cortes */
+  background-color: #F2EEF0; 
 }
 
 .home-page {
   padding: 40px;
-  background-color: #F2EEF0; /* Tu nuevo color de fondo */
+  background-color: #F2EEF0;
   overflow-y: visible; 
   min-height: calc(100vh - 90px); 
 }
 .page-header {
-  margin-bottom: 25px; /* Espacio entre el botón y el formulario */
+  margin-bottom: 25px; 
   display: flex;
   align-items: center;
 }
@@ -36,9 +36,9 @@
 /* 3. INPUTS DE BÚSQUEDA */
 .input-field {
   padding: 12px 18px;
-  border: 1px solid #e0e0e0; /* Un poco más definido para que resalte en el fondo gris */
+  border: 1px solid #e0e0e0; 
   border-radius: 8px;
-  background-color: #ffffff; /* Ahora los inputs son blancos para contrastar */
+  background-color: #ffffff; 
   font-size: 14px;
   outline: none;
   width: 250px;
@@ -61,7 +61,7 @@
   cursor: pointer;
   transition: transform 0.1s ease, opacity 0.2s;
   white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Ligera sombra para elevarlos del fondo */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .btn-header-purple { background-color: #6f42c1; }
@@ -70,15 +70,15 @@
 
 .btn-header-purple:hover, .btn-header-blue:hover { 
   opacity: 0.9;
-  transform: translateY(-1px); /* Efecto sutil al pasar el ratón */
+  transform: translateY(-1px);
 }
 
 /* 5. DISEÑO DE LA TABLA (EL "CARD") */
 .table-container {
   border-radius: 12px;
   border: 1px solid #e0e0e0;
-  background-color: #ffffff; /* La tabla se mantiene blanca para resaltar */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Sombra más elegante sobre el fondo gris */
+  background-color: #ffffff; 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   overflow-x: auto;
   width: 100%;
 }
@@ -164,5 +164,5 @@
   padding: 60px;
   text-align: center;
   color: #999;
-  background-color: transparent; /* Para que use el fondo F2EEF0 */
+  background-color: transparent; 
 }

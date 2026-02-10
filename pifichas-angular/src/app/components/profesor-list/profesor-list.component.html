@@ -1,15 +1,21 @@
-<div class="home-page">
-  <div class="page-header">
-    <h1>Gestión de Profesores</h1>
-    <div class="header-btns">
-      <button class="btn-add-profe" (click)="mostrarFormulario = !mostrarFormulario">
-        {{ mostrarFormulario ? '← Ver Lista' : '+ Añadir Profesor' }}
+<div class="detail-page">
+  
+  <div class="detail-header">
+    <div class="header-left">
+      <div class="header-info">
+        <h2>Gestión de Profesores</h2>
+        <p class="group">Administración del claustro</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-primary" (click)="mostrarFormulario = !mostrarFormulario">
+        {{ mostrarFormulario ? 'Ver Listado' : '+ Añadir Profesor' }}
       </button>
-      <button class="btn-report" routerLink="/home">Volver a Alumnos</button>
+      <button class="btn-back-header" routerLink="/home">Volver</button>
     </div>
   </div>
 
-  <!-- MODAL CONFIRMACIÓN (CREAR / ELIMINAR / AVISOS) -->
   <app-confirm-dialog
     [isOpen]="showConfirmDialog"
     [title]="confirmDialogTitle"
@@ -19,52 +25,63 @@
     (cancelled)="onDialogCancelled()">
   </app-confirm-dialog>
 
-  <!-- FORMULARIO CREAR PROFESOR -->
-  <div *ngIf="mostrarFormulario" class="form-container">
-    <h2>Registrar Nuevo Profesor</h2>
-    <div class="form-grid">
-      <input type="text" [(ngModel)]="nuevoProfe.nombre" placeholder="Nombre completo" class="input-field">
-      <input type="email" [(ngModel)]="nuevoProfe.email" placeholder="Correo electrónico" class="input-field">
-      <input type="password" [(ngModel)]="nuevoProfe.contrasenia" placeholder="Contraseña inicial" class="input-field">
-      <button class="btn-save" (click)="guardarProfesor()">💾 Guardar Profesor</button>
+  <div class="content-card">
+    
+    <div *ngIf="mostrarFormulario">
+      <h3>Registrar Nuevo Profesor</h3>
+      <div class="form-section">
+        <div class="form-row">
+          <label>Nombre Completo</label>
+          <input type="text" [(ngModel)]="nuevoProfe.nombre" placeholder="Ej. Juan Pérez">
+        </div>
+        <div class="form-row">
+          <label>Correo Electrónico</label>
+          <input type="email" [(ngModel)]="nuevoProfe.email" placeholder="email@centro.com">
+        </div>
+        <div class="form-row">
+          <label>Contraseña</label>
+          <input type="password" [(ngModel)]="nuevoProfe.contrasenia" placeholder="********">
+        </div>
+      </div>
+      <button class="btn-save" (click)="guardarProfesor()">Guardar Profesor</button>
     </div>
-  </div>
 
-  <!-- LISTADO -->
-  <div class="table-container" *ngIf="!mostrarFormulario">
-    <div *ngIf="cargando" class="loading-text">Cargando profesores...</div>
+    <div *ngIf="!mostrarFormulario">
+      <div *ngIf="cargando" class="loader-container">
+        <div class="spinner"></div>
+        <p>Cargando datos...</p>
+      </div>
 
-    <table class="students-table" *ngIf="!cargando && profesores.length > 0">
-      <thead>
-        <tr class="table-header">
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>Alumnos a cargo</th>
-          <th class="action-cell">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="table-row" *ngFor="let profe of profesores">
-          <td>{{ profe.id }}</td>
-          <td>{{ profe.nombre }}</td>
-          <td>{{ profe.email }}</td>
-          <td>
-            <span class="badge-alumnos">
-              {{ profe.total_alumnos || 0 }} alumnos
-            </span>
-          </td>
-          <td class="action-cell">
-            <button class="btn-delete" (click)="eliminarProfe(profe.id, profe.nombre)">
-              🗑️ Eliminar
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+      <div class="table-scroll" *ngIf="!cargando && profesores.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Alumnos</th>
+              <th style="text-align: center;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let profe of profesores">
+              <td><strong>{{ profe.id }}</strong></td>
+              <td>{{ profe.nombre }}</td>
+              <td>{{ profe.email }}</td>
+              <td><span class="badge">{{ profe.total_alumnos || 0 }} asignados</span></td>
+              <td style="text-align: center;">
+                <button class="btn-action btn-delete-minimal" (click)="eliminarProfe(profe.id, profe.nombre)">
+                  <span class="close-icon">×</span> Eliminar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-    <div *ngIf="!cargando && profesores.length === 0" class="no-results">
-      No se han encontrado profesores activos.
+      <div *ngIf="!cargando && profesores.length === 0" class="no-data">
+        <p>No hay profesores registrados.</p>
+      </div>
     </div>
   </div>
 </div>

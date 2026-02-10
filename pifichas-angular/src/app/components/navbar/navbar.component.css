@@ -19,7 +19,7 @@
 .navbar-left {
   display: flex;
   align-items: center;
-  gap: 28px; /* reducido para acercar el texto */
+  gap: 28px;
   flex: 1;
 }
 
@@ -32,28 +32,26 @@
 }
 
 .nav-spacer {
-  flex: 0.4; /* reduce el empuje hacia la derecha */
+  flex: 0.4;
 }
 
 .nav-button {
-  /* ... resto de propiedades ... */
-  font-size: 60px; /* Aumentamos el tamaño base (estaba en 18px) */
-  font-weight: 700; /* Esto lo pone en negrita (bold) */
-  text-transform: none; /* Asegura que respete tus mayúsculas/minúsculas */
-  background: none;      /* Quita cualquier color de fondo */
-  border: none;          /* Quita el borde sólido */
-  outline: none;         /* Quita el borde de enfoque (azul/negro) */
-  box-shadow: none;      /* Quita sombras que puedan parecer bordes */
-  cursor: pointer;       /* Asegura que salga la mano al pasar el ratón */
-  padding: 0 15px;       /* Un poco de espacio a los lados para que respire */
+  font-size: 60px; 
+  font-weight: 700; 
+  text-transform: none; 
+  background: none;   
+  border: none;   
+  outline: none;        
+  box-shadow: none;      
+  cursor: pointer; 
+  padding: 0 15px;    
 }
 
 .button-text {
   display: block;
-  /* Si quieres que sea todavía más específico, puedes añadirlo aquí */
   font-size: 27px; 
   font-weight: bold;
-  letter-spacing: 0.5px; /* Un poco de espacio entre letras le da un toque profesional */
+  letter-spacing: 0.5px;
 }
 
 .nav-button:hover {
@@ -79,6 +77,8 @@
   display: flex;
   align-items: center;
   margin-left: auto;
+  min-width: 120px;
+  justify-content: flex-end;
 }
 
 .user-avatar {

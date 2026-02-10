@@ -45,7 +45,6 @@ export class LoginComponent implements OnDestroy {
       next: (profesor) => {
         this.isLoading = false;
         if (profesor) {
-          // MODIFICADO: Cambiado 'alumnos' por 'home' para que coincida con tu app.routes.ts
           this.router.navigate(['/home']);
         }
         this.cd.detectChanges();

@@ -211,6 +211,12 @@ input:focus, textarea:focus {
   flex: 1;
 }
 
+.observations-left textarea {
+  min-height: 150px;
+  width: 100%;
+  resize: vertical;
+}
+
 .observations-right {
   flex: 1.5;
 }
@@ -218,7 +224,7 @@ input:focus, textarea:focus {
 .obs-controls {
   display: flex;
   gap: 10px;
-  margin-top: 15px;
+  margin-top: 12px;
   align-items: center;
 }
 
@@ -305,8 +311,8 @@ tr:hover td {
 }
 
 .badge {
-  background: #e8f0fe; /* Fondo azul muy claro */
-  color: #1a73e8; /* Texto azul */
+  background: #e8f0fe;
+  color: #1a73e8;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 11px;
